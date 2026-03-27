@@ -10,6 +10,7 @@ make_template.py
 # 临时文件
 ~$*
 *.tmp
+goods_data.json
 
 # WorkBuddy 工作目录
 .workbuddy/
