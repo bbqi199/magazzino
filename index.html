@@ -1280,6 +1280,9 @@ const App = (function(){
     showPage('page-success', false);
     showToast('订单提交成功！');
 
+    // ── 发送订单通知邮件 ──
+    sendOrderEmail(order);
+
     // ── 生成 Excel 并下载 ──
     try {
       if(typeof XLSX === 'undefined'){ showToast('⚠️ Excel库未加载，请检查网络'); return; }
@@ -1741,6 +1744,48 @@ App.init();
 <!-- SheetJS 用于Excel解析 -->
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" 
   onerror="document.getElementById('drop-zone')&&(document.getElementById('drop-zone').innerHTML='<div style=\'color:#e53e3e;font-size:13px;\'>⚠️ Excel解析库加载失败，请检查网络连接</div>')">
+</script>
+<!-- EmailJS 用于订单通知邮件 -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script>
+  // ===== EmailJS 配置 =====
+  // 注册 emailjs.com 后，把下面三个值替换成你自己的
+  var EMAILJS_PUBLIC_KEY  = 'YOUR_PUBLIC_KEY';     // Account -> General -> Public Key
+  var EMAILJS_SERVICE_ID  = 'YOUR_SERVICE_ID';     // Email Services -> 你的服务ID
+  var EMAILJS_TEMPLATE_ID = 'YOUR_TEMPLATE_ID';    // Email Templates -> 你的模板ID
+
+  if(EMAILJS_PUBLIC_KEY !== 'YOUR_PUBLIC_KEY'){
+    emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+  }
+
+  // 发送订单通知邮件
+  function sendOrderEmail(order){
+    if(EMAILJS_PUBLIC_KEY === 'YOUR_PUBLIC_KEY') return; // 未配置则跳过
+
+    // 生成商品明细文本
+    var itemLines = order.items.map(function(i, idx){
+      return (idx+1) + '. ' + i.name + '  ' + i.spec + '  x' + i.qty + '件  ¥' + (i.price * i.qty).toFixed(2);
+    }).join('\n');
+
+    var addr = order.address;
+    var addrText = (addr.name||'') + ' ' + (addr.phone||'') + '\n' + (addr.province||'') + (addr.city||'') + (addr.district||'') + (addr.detail||'');
+
+    var templateParams = {
+      order_no:    order.no,
+      order_time:  order.time,
+      buyer_name:  addr.name  || '—',
+      buyer_phone: addr.phone || '—',
+      address:     addrText,
+      items_text:  itemLines,
+      item_count:  order.items.length,
+      total:       '¥' + order.total.toFixed(2),
+      remark:      order.remark || '无'
+    };
+
+    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams)
+      .then(function(){ console.log('订单邮件发送成功'); })
+      .catch(function(err){ console.warn('订单邮件发送失败:', err); });
+  }
 </script>
 </body>
 </html>
