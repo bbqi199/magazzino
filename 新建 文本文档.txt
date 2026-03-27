@@ -1,0 +1,11 @@
+cd "c:/Users/ASUS/WorkBuddy/20260326223456"
+git add .
+git commit -m "更新商品数据"
+git push
+
+
+
+
+git add images/
+git commit -m "更新图片"
+git push
