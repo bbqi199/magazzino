@@ -1018,16 +1018,34 @@ const App = (function(){
       panel.innerHTML = '<div style="padding:40px 0;text-align:center;color:var(--text-3);font-size:14px;">未找到相关商品</div>';
       return;
     }
-    panel.innerHTML = results.map(function(g){
-      const imgSrc = g.imageUrl || ('images/' + g.id + '.jpg');
-      return '<div class="goods-card" onclick="App.openDetail(\'' + g.id + '\')">'
-        + '<div class="goods-img"><img src="' + imgSrc + '" onerror="this.style.display=\'none\'" loading="lazy"><span class="goods-emoji">' + (g.emoji||'📦') + '</span></div>'
-        + '<div class="goods-name">' + g.name + '</div>'
-        + '<div class="goods-spec" style="font-size:11px;color:var(--text-3);">编号：' + g.id + '</div>'
-        + '<div class="goods-bottom"><span class="goods-price"><span>¥</span>' + (g.price||0).toFixed(2) + '</span>'
-        + '<button class="add-btn" onclick="event.stopPropagation();App.quickAddCart(\'' + g.id + '\')">+</button></div>'
+    const kw2 = val.trim().toLowerCase();
+    let html2 = '<div style="display:flex;flex-direction:column;gap:0;">';
+    results.forEach(function(g){
+      const imgUrl2 = g.imageUrl || ('images/' + g.id + '.jpg');
+      const emoji2 = g.emoji || '📦';
+      html2 += '<div onclick="App.openDetail(\'' + g.id + '\')"'
+        + ' style="display:flex;align-items:center;gap:12px;background:var(--white);padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;">'
+        + '<div style="width:56px;height:56px;border-radius:10px;overflow:hidden;flex-shrink:0;background:#f5f5f5;position:relative;">'
+        + '<img src="' + imgUrl2 + '" alt="' + g.name + '" style="width:100%;height:100%;object-fit:contain;" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">'
+        + '<span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:24px;position:absolute;top:0;left:0;">' + emoji2 + '</span>'
+        + '</div>'
+        + '<div style="flex:1;min-width:0;">'
+        + '<div style="font-size:14px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + highlightKeyword(g.name, kw2) + '</div>'
+        + '<div style="font-size:12px;color:var(--text-3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + highlightKeyword(g.spec, kw2) + '</div>'
+        + '<div style="font-size:11px;color:var(--text-3);margin-top:2px;">编号：' + highlightKeyword(g.id, kw2) + '</div>'
+        + '</div>'
+        + '<div style="text-align:right;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:6px;">'
+        + '<div>'
+        + '<div style="font-size:15px;font-weight:700;color:var(--primary);">' + formatPrice(g.price) + '</div>'
+        + '<div style="font-size:11px;color:var(--text-3);">/' + g.unit + '</div>'
+        + '</div>'
+        + '<button onclick="event.stopPropagation();App.quickAddCart(\'' + g.id + '\')"'
+        + ' style="background:var(--primary);color:#fff;border:none;border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;letter-spacing:0.5px;">🛒 加入购物车</button>'
+        + '</div>'
         + '</div>';
-    }).join('');
+    });
+    html2 += '</div>';
+    panel.innerHTML = html2;
   }
 
   function clearCatSearch(){
