@@ -1283,6 +1283,9 @@ const App = (function(){
     // ── 发送订单通知邮件 ──
     sendOrderEmail(order);
 
+    // ── 同步订单到 Google Sheets ──
+    sendOrderToSheet(order);
+
     // ── 生成 Excel 并下载 ──
     try {
       if(typeof XLSX === 'undefined'){ showToast('⚠️ Excel库未加载，请检查网络'); return; }
@@ -1793,13 +1796,51 @@ App.init();
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script>
   // ===== EmailJS 配置 =====
-  // 注册 emailjs.com 后，把下面三个值替换成你自己的
-  var EMAILJS_PUBLIC_KEY  = 'eUVoSNmMG1s6PLsX1';  // Account -> General -> Public Key
-  var EMAILJS_SERVICE_ID  = 'service_26rqfkn';     // Email Services -> 你的服务ID
-  var EMAILJS_TEMPLATE_ID = 'template_21by9wg';    // Email Templates -> 你的模板ID
+  var EMAILJS_PUBLIC_KEY  = 'eUVoSNmMG1s6PLsX1';
+  var EMAILJS_SERVICE_ID  = 'service_26rqfkn';
+  var EMAILJS_TEMPLATE_ID = 'template_21by9wg';
 
   if(EMAILJS_PUBLIC_KEY !== 'YOUR_PUBLIC_KEY'){
     emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+  }
+
+  // ===== Google Sheets 订单同步配置 =====
+  var GSHEET_URL = 'https://script.google.com/macros/s/AKfycbyjmOZcqSZZSm3rUdlsUraejAs5JwnwcEujSeRtWdEQt07-LXgTTh6_Nsk4jpRMzmgdOw/exec';
+
+  // 上传订单到 Google Sheets
+  function sendOrderToSheet(order){
+    if(!GSHEET_URL) return;
+    var addr = order.address || {};
+
+    // 纯文本商品明细（表格用）
+    var itemsPlain = order.items.map(function(i, idx){
+      return (idx+1) + '. ' + i.name + ' | ' + i.spec + ' | x' + i.qty + ' | ¥' + (i.price*i.qty).toFixed(2);
+    }).join('\n');
+
+    var addrText = (addr.province||'') + (addr.city||'') + (addr.district||'') + (addr.detail||'');
+
+    var payload = {
+      order_no:    order.no,
+      order_time:  order.time,
+      buyer_name:  addr.name  || '—',
+      buyer_phone: addr.phone || '—',
+      address:     addrText,
+      items_plain: itemsPlain,
+      item_count:  order.items.length,
+      total:       '¥' + order.total.toFixed(2),
+      remark:      order.remark || '无'
+    };
+
+    fetch(GSHEET_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).then(function(){
+      console.log('订单已同步到Google Sheets');
+    }).catch(function(err){
+      console.warn('Google Sheets同步失败:', err);
+    });
   }
 
   // 发送订单通知邮件
