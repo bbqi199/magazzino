@@ -988,7 +988,7 @@ const App = (function(){
           <div class="goods-spec">${g.spec}</div>
           <div class="goods-bottom">
             <div class="goods-price">${formatPrice(g.price)}<span>/${g.unit}</span></div>
-            <button class="add-btn" onclick="event.stopPropagation();App.quickAddCart(${g.id})">+</button>
+            <button class="add-btn" onclick="event.stopPropagation();App.quickAddCart('${g.id}')">+</button>
           </div>
         </div>
       </div>`).join('')}</div>`;
