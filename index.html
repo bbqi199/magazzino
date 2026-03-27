@@ -415,7 +415,17 @@
     <div class="navbar">
       <div class="navbar-left"></div>
       <div class="navbar-title">全部商品</div>
-      <div class="navbar-right"><span class="nav-icon" onclick="App.showToast('搜索功能开发中…')">🔍</span></div>
+      <div class="navbar-right"><span class="nav-icon" onclick="App.toggleCatSearch()">🔍</span></div>
+    </div>
+    <!-- 全部商品页搜索栏（默认隐藏） -->
+    <div id="cat-search-bar" style="display:none;padding:8px 16px;background:var(--white);border-bottom:1px solid var(--border);">
+      <div class="search-input">
+        <span>🔍</span>
+        <input type="text" id="cat-search-input" placeholder="搜索商品名称或编号…"
+          oninput="App.onCatSearchInput(this.value)"
+          autocomplete="off">
+        <span id="cat-search-clear" style="display:none;cursor:pointer;color:var(--text-3);font-size:18px;line-height:1;" onclick="App.clearCatSearch()">×</span>
+      </div>
     </div>
     <div class="page-body" style="display:flex;flex:1;overflow:hidden;">
       <div class="cat-list" id="cat-list2" style="position:sticky;top:0;overflow-y:auto;height:100%;"></div>
@@ -911,6 +921,64 @@ const App = (function(){
   }
   // ==================== 搜索功能 END ====================
 
+  // ==================== 全部商品页搜索 ====================
+  function toggleCatSearch(){
+    const bar = $('cat-search-bar');
+    if(!bar) return;
+    if(bar.style.display === 'none'){
+      bar.style.display = 'block';
+      const inp = $('cat-search-input');
+      if(inp){ inp.value = ''; inp.focus(); }
+    } else {
+      clearCatSearch();
+      bar.style.display = 'none';
+    }
+  }
+
+  function onCatSearchInput(val){
+    const clearBtn = $('cat-search-clear');
+    if(clearBtn) clearBtn.style.display = val ? 'block' : 'none';
+    const panel = $('goods-panel2');
+    if(!panel) return;
+    if(!val.trim()){
+      // 恢复正常分类商品列表
+      const activeCat = document.querySelector('#cat-list2 .cat-item.active');
+      if(activeCat) activeCat.click();
+      return;
+    }
+    const kw = val.trim().toLowerCase();
+    const results = GOODS_DATA.filter(function(g){
+      return String(g.id).toLowerCase().includes(kw) ||
+        (g.name && g.name.toLowerCase().includes(kw)) ||
+        (g.spec && g.spec.toLowerCase().includes(kw));
+    });
+    if(results.length === 0){
+      panel.innerHTML = '<div style="padding:40px 0;text-align:center;color:var(--text-3);font-size:14px;">未找到相关商品</div>';
+      return;
+    }
+    panel.innerHTML = results.map(function(g){
+      const imgSrc = g.imageUrl || ('images/' + g.id + '.jpg');
+      return '<div class="goods-card" onclick="App.openDetail(\'' + g.id + '\')">'
+        + '<div class="goods-img"><img src="' + imgSrc + '" onerror="this.style.display=\'none\'" loading="lazy"><span class="goods-emoji">' + (g.emoji||'📦') + '</span></div>'
+        + '<div class="goods-name">' + g.name + '</div>'
+        + '<div class="goods-spec" style="font-size:11px;color:var(--text-3);">编号：' + g.id + '</div>'
+        + '<div class="goods-bottom"><span class="goods-price"><span>¥</span>' + (g.price||0).toFixed(2) + '</span>'
+        + '<button class="add-btn" onclick="event.stopPropagation();App.quickAddCart(\'' + g.id + '\')">+</button></div>'
+        + '</div>';
+    }).join('');
+  }
+
+  function clearCatSearch(){
+    const inp = $('cat-search-input');
+    if(inp){ inp.value = ''; }
+    const clearBtn = $('cat-search-clear');
+    if(clearBtn) clearBtn.style.display = 'none';
+    // 恢复正常商品列表
+    const activeCat = document.querySelector('#cat-list2 .cat-item.active');
+    if(activeCat) activeCat.click();
+  }
+  // ==================== 全部商品页搜索 END ====================
+
 
 
   // ---------- 图片辅助：根据商品编号自动匹配本地图片 ----------
@@ -1283,28 +1351,9 @@ const App = (function(){
     // ── 发送订单通知邮件 ──
     sendOrderEmail(order);
 
+
     // ── 同步订单到 Google Sheets ──
     sendOrderToSheet(order);
-
-    // ── 生成 Excel 并下载 ──
-    try {
-      if(typeof XLSX === 'undefined'){ showToast('⚠️ Excel库未加载，请检查网络'); return; }
-      // 构造表格数据：表头 + 每行商品
-      const wsData = [['商品编号','商品名称','规格','订货数量']];
-      order.items.forEach(function(i){
-        wsData.push([String(i.goodId), i.name, i.spec, i.qty]);
-      });
-      const ws = XLSX.utils.aoa_to_sheet(wsData);
-      // 设置列宽
-      ws['!cols'] = [{wch:18},{wch:28},{wch:20},{wch:10}];
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, '订货单');
-      const filename = '订货单_' + orderNo + '.xlsx';
-      XLSX.writeFile(wb, filename);
-      showToast('📥 订货单已保存：' + filename);
-    } catch(e){
-      showToast('⚠️ Excel生成失败：' + e.message);
-    }
   }
 
   // ---------- 订单 ----------
@@ -1773,6 +1822,7 @@ const App = (function(){
     switchCat,switchCat2,
     openDetail,selectSpec,changeQty,
     onSearchInput,onSearchFocus,clearSearch,
+    toggleCatSearch,onCatSearchInput,clearCatSearch,
     addToCart,quickAddCart,buyNow,
     clearCart,renderCart,toggleCartCheck,toggleCheckAll,changeCartQty,removeCartItem,
     goCheckout,submitOrder,
