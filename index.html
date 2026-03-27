@@ -1345,6 +1345,7 @@ const App = (function(){
             ${o.status==='pending'?`<button class="order-btn" onclick="App.cancelOrder('${o.no}')">取消订单</button>`:''}
             ${o.status==='done'?`<button class="order-btn primary" onclick="App.reorder('${o.no}')">再次下单</button>`:''}
             ${o.status==='processing'?`<button class="order-btn primary" onclick="App.showToast('物流信息查询功能开发中…')">查看物流</button>`:''}
+            <button class="order-btn" style="color:var(--primary);border-color:var(--primary);" onclick="App.exportOrderExcel('${o.no}')">📥 导出Excel</button>
           </div>
         </div>
       </div>`).join('');
@@ -1353,6 +1354,49 @@ const App = (function(){
     state.orderTabIdx=idx;
     document.querySelectorAll('.order-tab').forEach((el,i)=>el.classList.toggle('active',i===idx));
     renderOrders();
+  }
+  function exportOrderExcel(no){
+    const o = state.orders.find(x=>x.no===no);
+    if(!o){ showToast('找不到该订单'); return; }
+    if(typeof XLSX === 'undefined'){ showToast('⚠️ Excel库未加载，请检查网络'); return; }
+
+    // 订单基本信息
+    const addr = o.address || {};
+    const infoRows = [
+      ['订单编号', o.no],
+      ['下单时间', o.time],
+      ['订单状态', {pending:'待确认',processing:'备货中',done:'已完成',cancelled:'已取消'}[o.status]||o.status],
+      ['客户姓名', addr.name||'—'],
+      ['联系电话', addr.phone||'—'],
+      ['收货地址', (addr.province||'')+(addr.city||'')+(addr.district||'')+(addr.detail||'')],
+      ['备注',     o.remark||'无'],
+      [''],  // 空行分隔
+      ['商品编号','商品名称','规格','单价','数量','小计'],
+    ];
+
+    // 商品明细
+    const goodsRows = o.items.map(i=>[
+      String(i.goodId),
+      i.name,
+      i.spec,
+      i.price,
+      i.qty,
+      parseFloat((i.price * i.qty).toFixed(2))
+    ]);
+
+    // 合计行
+    const totalRow = ['','','','合计','', parseFloat(o.total.toFixed(2))];
+
+    const wsData = [...infoRows, ...goodsRows, [''], totalRow];
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+    // 列宽
+    ws['!cols'] = [{wch:16},{wch:30},{wch:20},{wch:10},{wch:8},{wch:12}];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, '订货单');
+    XLSX.writeFile(wb, '订货单_' + no + '.xlsx');
+    showToast('📥 已导出：订货单_' + no + '.xlsx');
   }
   function cancelOrder(no){
     const o=state.orders.find(x=>x.no===no);
@@ -1729,7 +1773,7 @@ const App = (function(){
     addToCart,quickAddCart,buyNow,
     clearCart,renderCart,toggleCartCheck,toggleCheckAll,changeCartQty,removeCartItem,
     goCheckout,submitOrder,
-    renderOrders,switchOrderTab,cancelOrder,reorder,
+    renderOrders,switchOrderTab,cancelOrder,reorder,exportOrderExcel,
     renderProfile,showEditProfile,saveProfile,
     showAddAddress,editAddress,saveAddress,deleteAddress,setDefaultAddr,renderAddress,
     closeModal,showToast,
@@ -1762,13 +1806,31 @@ App.init();
   function sendOrderEmail(order){
     if(EMAILJS_PUBLIC_KEY === 'YOUR_PUBLIC_KEY') return; // 未配置则跳过
 
-    // 生成商品明细文本
-    var itemLines = order.items.map(function(i, idx){
-      return (idx+1) + '. ' + i.name + '  ' + i.spec + '  x' + i.qty + '件  ¥' + (i.price * i.qty).toFixed(2);
-    }).join('\n');
+    // 生成商品明细 HTML 表格
+    var itemRows = order.items.map(function(i, idx){
+      return '<tr style="border-bottom:1px solid #eee;">'
+        + '<td style="padding:6px 8px;color:#666;">' + (idx+1) + '</td>'
+        + '<td style="padding:6px 8px;font-weight:500;">' + i.name + '</td>'
+        + '<td style="padding:6px 8px;color:#666;">' + i.spec + '</td>'
+        + '<td style="padding:6px 8px;text-align:center;">' + i.qty + '</td>'
+        + '<td style="padding:6px 8px;text-align:right;color:#e05c1a;">¥' + (i.price * i.qty).toFixed(2) + '</td>'
+        + '</tr>';
+    }).join('');
+
+    var itemsHtml = '<table style="width:100%;border-collapse:collapse;font-size:13px;">'
+      + '<thead><tr style="background:#f5f5f5;">'
+      + '<th style="padding:6px 8px;text-align:left;">#</th>'
+      + '<th style="padding:6px 8px;text-align:left;">商品名称</th>'
+      + '<th style="padding:6px 8px;text-align:left;">规格</th>'
+      + '<th style="padding:6px 8px;text-align:center;">数量</th>'
+      + '<th style="padding:6px 8px;text-align:right;">小计</th>'
+      + '</tr></thead>'
+      + '<tbody>' + itemRows + '</tbody>'
+      + '</table>';
 
     var addr = order.address;
-    var addrText = (addr.name||'') + ' ' + (addr.phone||'') + '\n' + (addr.province||'') + (addr.city||'') + (addr.district||'') + (addr.detail||'');
+    var addrText = (addr.name||'') + ' ' + (addr.phone||'') + '<br>'
+      + (addr.province||'') + (addr.city||'') + (addr.district||'') + (addr.detail||'');
 
     var templateParams = {
       order_no:    order.no,
@@ -1776,7 +1838,7 @@ App.init();
       buyer_name:  addr.name  || '—',
       buyer_phone: addr.phone || '—',
       address:     addrText,
-      items_text:  itemLines,
+      items_text:  itemsHtml,
       item_count:  order.items.length,
       total:       '¥' + order.total.toFixed(2),
       remark:      order.remark || '无'
