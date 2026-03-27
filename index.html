@@ -394,6 +394,10 @@
         <div class="tab-icon">📦</div>
         <div class="tab-label">全部商品</div>
       </div>
+      <div class="tab-item" onclick="App.switchTab('scan')">
+        <div class="tab-icon">📷</div>
+        <div class="tab-label">扫码</div>
+      </div>
       <div class="tab-item" onclick="App.switchTab('cart')">
         <div class="tab-icon">🛒</div>
         <div class="tab-label">购物车</div>
@@ -434,6 +438,7 @@
     <div class="tabbar">
       <div class="tab-item" onclick="App.switchTab('home')"><div class="tab-icon">🏠</div><div class="tab-label">首页</div></div>
       <div class="tab-item active" onclick="App.switchTab('category')"><div class="tab-icon">📦</div><div class="tab-label">全部商品</div></div>
+      <div class="tab-item" onclick="App.switchTab('scan')"><div class="tab-icon">📷</div><div class="tab-label">扫码</div></div>
       <div class="tab-item" onclick="App.switchTab('cart')"><div class="tab-icon">🛒</div><div class="tab-label">购物车</div><div class="tab-badge" id="cart-badge2" style="display:none">0</div></div>
       <div class="tab-item" onclick="App.switchTab('order')"><div class="tab-icon">📋</div><div class="tab-label">我的订单</div></div>
       <div class="tab-item" onclick="App.switchTab('profile')"><div class="tab-icon">👤</div><div class="tab-label">我的</div></div>
@@ -461,6 +466,7 @@
     <div class="tabbar">
       <div class="tab-item" onclick="App.switchTab('home')"><div class="tab-icon">🏠</div><div class="tab-label">首页</div></div>
       <div class="tab-item" onclick="App.switchTab('category')"><div class="tab-icon">📦</div><div class="tab-label">全部商品</div></div>
+      <div class="tab-item" onclick="App.switchTab('scan')"><div class="tab-icon">📷</div><div class="tab-label">扫码</div></div>
       <div class="tab-item active" onclick="App.switchTab('cart')"><div class="tab-icon">🛒</div><div class="tab-label">购物车</div></div>
       <div class="tab-item" onclick="App.switchTab('order')"><div class="tab-icon">📋</div><div class="tab-label">我的订单</div></div>
       <div class="tab-item" onclick="App.switchTab('profile')"><div class="tab-icon">👤</div><div class="tab-label">我的</div></div>
@@ -515,6 +521,7 @@
     <div class="tabbar">
       <div class="tab-item" onclick="App.switchTab('home')"><div class="tab-icon">🏠</div><div class="tab-label">首页</div></div>
       <div class="tab-item" onclick="App.switchTab('category')"><div class="tab-icon">📦</div><div class="tab-label">全部商品</div></div>
+      <div class="tab-item" onclick="App.switchTab('scan')"><div class="tab-icon">📷</div><div class="tab-label">扫码</div></div>
       <div class="tab-item" onclick="App.switchTab('cart')"><div class="tab-icon">🛒</div><div class="tab-label">购物车</div><div class="tab-badge" id="cart-badge3" style="display:none">0</div></div>
       <div class="tab-item active" onclick="App.switchTab('order')"><div class="tab-icon">📋</div><div class="tab-label">我的订单</div></div>
       <div class="tab-item" onclick="App.switchTab('profile')"><div class="tab-icon">👤</div><div class="tab-label">我的</div></div>
@@ -562,9 +569,64 @@
     <div class="tabbar">
       <div class="tab-item" onclick="App.switchTab('home')"><div class="tab-icon">🏠</div><div class="tab-label">首页</div></div>
       <div class="tab-item" onclick="App.switchTab('category')"><div class="tab-icon">📦</div><div class="tab-label">全部商品</div></div>
+      <div class="tab-item" onclick="App.switchTab('scan')"><div class="tab-icon">📷</div><div class="tab-label">扫码</div></div>
       <div class="tab-item" onclick="App.switchTab('cart')"><div class="tab-icon">🛒</div><div class="tab-label">购物车</div><div class="tab-badge" id="cart-badge4" style="display:none">0</div></div>
       <div class="tab-item" onclick="App.switchTab('order')"><div class="tab-icon">📋</div><div class="tab-label">我的订单</div></div>
       <div class="tab-item active" onclick="App.switchTab('profile')"><div class="tab-icon">👤</div><div class="tab-label">我的</div></div>
+    </div>
+  </div>
+
+  <!-- ==================== 扫码页 ==================== -->
+  <div class="page" id="page-scan">
+    <div class="navbar">
+      <div class="navbar-left"></div>
+      <div class="navbar-title">扫码录入</div>
+      <div class="navbar-right"></div>
+    </div>
+    <div class="page-body" style="padding:16px;display:flex;flex-direction:column;gap:14px;">
+
+      <!-- 输入区 -->
+      <div style="background:var(--white);border-radius:12px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
+        <div style="font-size:13px;color:var(--text-2);margin-bottom:10px;">📷 将条形码对准扫码枪，或手动输入商品编号：</div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input type="text" id="scan-input"
+            placeholder="扫描或输入条形码…"
+            style="flex:1;border:1.5px solid var(--border);border-radius:8px;padding:10px 14px;font-size:16px;color:var(--text);outline:none;background:#fafafa;"
+            onfocus="this.style.borderColor='var(--primary)'"
+            onblur="this.style.borderColor='var(--border)'"
+            onkeydown="if(event.key==='Enter')App.scanAdd()">
+          <button onclick="App.scanAdd()"
+            style="padding:10px 18px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;white-space:nowrap;">
+            加入
+          </button>
+        </div>
+        <div style="font-size:11px;color:var(--text-3);margin-top:8px;">扫码枪扫描后自动加入，无需点击按钮</div>
+      </div>
+
+      <!-- 本次扫码记录 -->
+      <div style="background:var(--white);border-radius:12px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <span style="font-size:14px;font-weight:600;color:var(--text);">本次扫码记录</span>
+          <span onclick="App.scanClearLog()" style="font-size:12px;color:var(--text-3);cursor:pointer;">清空记录</span>
+        </div>
+        <div id="scan-log" style="display:flex;flex-direction:column;gap:8px;">
+          <div style="text-align:center;color:var(--text-3);font-size:13px;padding:20px 0;">暂无记录，开始扫码吧～</div>
+        </div>
+      </div>
+
+      <!-- 快捷按钮 -->
+      <button onclick="App.switchTab('cart')"
+        style="width:100%;padding:13px;background:var(--primary);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;">
+        🛒 去购物车结算
+      </button>
+    </div>
+    <div class="tabbar">
+      <div class="tab-item" onclick="App.switchTab('home')"><div class="tab-icon">🏠</div><div class="tab-label">首页</div></div>
+      <div class="tab-item" onclick="App.switchTab('category')"><div class="tab-icon">📦</div><div class="tab-label">全部商品</div></div>
+      <div class="tab-item active" onclick="App.switchTab('scan')"><div class="tab-icon">📷</div><div class="tab-label">扫码</div></div>
+      <div class="tab-item" onclick="App.switchTab('cart')"><div class="tab-icon">🛒</div><div class="tab-label">购物车</div><div class="tab-badge" id="cart-badge5" style="display:none">0</div></div>
+      <div class="tab-item" onclick="App.switchTab('order')"><div class="tab-icon">📋</div><div class="tab-label">我的订单</div></div>
+      <div class="tab-item" onclick="App.switchTab('profile')"><div class="tab-icon">👤</div><div class="tab-label">我的</div></div>
     </div>
   </div>
 
@@ -1009,12 +1071,16 @@ const App = (function(){
   // ---------- 页面切换 ----------
   function switchTab(tab){
     state.currentTab = tab;
-    const map = { home:'page-home',category:'page-category',cart:'page-cart',order:'page-order',profile:'page-profile' };
+    const map = { home:'page-home',category:'page-category',cart:'page-cart',order:'page-order',profile:'page-profile',scan:'page-scan' };
     showPage(map[tab], false);
     if(tab==='cart') renderCart();
     if(tab==='order') renderOrders();
     if(tab==='profile') renderProfile();
     if(tab==='category') renderCatPanel();
+    if(tab==='scan'){
+      // 切换到扫码页后自动聚焦输入框
+      setTimeout(function(){ const el=$('scan-input'); if(el) el.focus(); }, 100);
+    }
   }
   function showPage(pageId, pushStack=true){
     if(pushStack) state.pageStack.push(state.currentPage);
@@ -1174,9 +1240,83 @@ const App = (function(){
     addToCart();
     switchTab('cart');
   }
+  // ==================== 扫码功能 ====================
+  // 扫码记录（仅本次会话内保留，切换页面不清空）
+  var _scanLog = [];
+
+  function scanAdd(){
+    const input = $('scan-input');
+    if(!input) return;
+    const code = input.value.trim();
+    if(!code){ showToast('请输入或扫描条形码'); return; }
+
+    // 在商品库里查找
+    const g = GOODS_DATA.find(function(x){ return String(x.id).toLowerCase() === code.toLowerCase(); });
+
+    // 不管找没找到，都加入购物车
+    const goodId = g ? String(g.id) : code;
+    const name   = g ? g.name  : '未知商品';
+    const spec   = g ? (g.specs && g.specs[0] ? g.specs[0] : (g.spec||'')) : '';
+    const key    = goodId + '|' + spec;
+
+    // 加入购物车（已有则+1，没有则新增）
+    const existing = state.cartItems.find(function(i){ return i.key === key; });
+    if(existing){
+      existing.qty += 1;
+    } else {
+      state.cartItems.push({ key: key, goodId: goodId, spec: spec, qty: 1, checked: true });
+    }
+    save();
+    updateCartBadge();
+
+    // 记录到扫码日志
+    const found = !!g;
+    _scanLog.unshift({ code: goodId, name: name, spec: spec, found: found, time: new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit',second:'2-digit'}) });
+
+    // 刷新日志面板
+    renderScanLog();
+
+    // 清空输入框，准备下次扫码
+    input.value = '';
+    input.focus();
+
+    // 提示
+    if(found){
+      showToast('✅ ' + name + ' 已加入购物车');
+    } else {
+      showToast('⚠️ 编号 ' + code + ' 不在商品库，已加入购物车');
+    }
+  }
+
+  function renderScanLog(){
+    const el = $('scan-log');
+    if(!el) return;
+    if(_scanLog.length === 0){
+      el.innerHTML = '<div style="text-align:center;color:var(--text-3);font-size:13px;padding:20px 0;">暂无记录，开始扫码吧～</div>';
+      return;
+    }
+    el.innerHTML = _scanLog.map(function(item){
+      return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">'
+        + '<div style="font-size:20px;flex-shrink:0;">' + (item.found ? '✅' : '⚠️') + '</div>'
+        + '<div style="flex:1;min-width:0;">'
+        + '<div style="font-size:13px;font-weight:500;color:var(--text);">' + item.name + '</div>'
+        + '<div style="font-size:11px;color:var(--text-3);">编号：' + item.code + (item.spec ? '　规格：' + item.spec : '') + '</div>'
+        + (item.found ? '' : '<div style="font-size:11px;color:#e67e22;">商品库中未找到，已按编号录入</div>')
+        + '</div>'
+        + '<div style="font-size:11px;color:var(--text-3);flex-shrink:0;">' + item.time + '</div>'
+        + '</div>';
+    }).join('');
+  }
+
+  function scanClearLog(){
+    _scanLog = [];
+    renderScanLog();
+  }
+  // ==================== 扫码功能 END ====================
+
   function updateCartBadge(){
     const total=state.cartItems.reduce((s,i)=>s+i.qty,0);
-    ['cart-badge','cart-badge2','cart-badge3','cart-badge4'].forEach(id=>{
+    ['cart-badge','cart-badge2','cart-badge3','cart-badge4','cart-badge5'].forEach(id=>{
       const el=$(id); if(!el) return;
       el.textContent=total>99?'99+':total;
       el.style.display=total>0?'flex':'none';
@@ -1823,6 +1963,7 @@ const App = (function(){
     openDetail,selectSpec,changeQty,
     onSearchInput,onSearchFocus,clearSearch,
     toggleCatSearch,onCatSearchInput,clearCatSearch,
+    scanAdd,scanClearLog,
     addToCart,quickAddCart,buyNow,
     clearCart,renderCart,toggleCartCheck,toggleCheckAll,changeCartQty,removeCartItem,
     goCheckout,submitOrder,
