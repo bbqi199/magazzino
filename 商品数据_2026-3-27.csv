@@ -1,0 +1,89 @@
+﻿商品编号,所属分类ID,商品名称,规格描述,单价,计量单位,库存数量,商品标签,商品图标,规格选项,属性键值对,商品图片URL
+090,0,STELLA VOLANTE,48,1.9,PZ,999,,📦,48,,/images/090.jpg
+091,0,U F O,48,1.59,PZ,999,,📦,48,,/images/091.jpg
+093,0,BIG MAGIC CRACKLING,56,2.53,PZ,999,,📦,56,,/images/093.jpg
+094,0,NEW  GRANATA,72,1.11,PZ,999,,📦,72,,/images/094.jpg
+098,0,GUERRE STELLARI,10,8.76,PZ,999,,📦,10,,/images/098.jpg
+101,0,TOM MIX,160,1.03,PZ,999,,📦,160,,/images/101.jpg
+102,0,LIBELLULINA,100,1.07,PZ,999,,📦,100,,/images/102.jpg
+0103,0,LIBELLULA GIGANTE,36,2.61,PZ,999,,📦,36,,/images/0103.jpg
+106X,0,FIORELLINO 3 COLORI              1350PZ,450,0.34,PZ,999,,📦,450,,/images/106X.jpg
+108B,0,BOOM   NEW,160,0.78,PZ,999,,📦,160,,/images/108B.jpg
+109,0,NEW  MAGNUM,30,2.21,PZ,999,,📦,30,,/images/109.jpg
+109B,0,NEW  MAGNUM,100,1.14,PZ,999,,📦,100,,/images/109B.jpg
+110,0,MINI CICCIOLO,240,0.31,PZ,999,,📦,240,,/images/110.jpg
+111,0,RAUDO,160,0.5,PZ,999,,📦,160,,/images/111.jpg
+120,0,FUMOGENI,36,4.56,PZ,999,,📦,36,,/images/120.jpg
+121,0,PALLINA FUMOGENA,240,0.5,PZ,999,,📦,240,,/images/121.jpg
+122,0,METEORITE,200,0.67,PZ,999,,📦,200,,/images/122.jpg
+123,0,PALLINA SCOPPIETTANTE,192,0.45,PZ,999,,📦,192,,/images/123.jpg
+126,0,RAMBO 200 SHOTS,50,1.25,PZ,999,,📦,50,,/images/126.jpg
+127,0,RAMBO 500 SHOTS,32,2.96,PZ,999,,📦,32,,/images/127.jpg
+128,0,POP POP,300,0.2,PZ,999,,📦,300,,/images/128.jpg
+128B,0,POP POP  BIG,180,0.34,PZ,999,,📦,180,,/images/128B.jpg
+129,0,MAGIC WHIP 30 CM,80,1.53,PZ,999,,📦,80,,/images/129.jpg
+204,0,CANDELA MAGICA   38 CM,100,0.56,PZ,999,,📦,100,,/images/204.jpg
+116B,0,BOTTIGLIETTA,48,1.24,PZ,999,,📦,48,,/images/116B.jpg
+118B,0,PISTOLA LANCIA STELLE FILANTI,48,2.56,PZ,999,,📦,48,,/images/118B.jpg
+202,0,STELLE MAGICHE    25 cm.,200,0.37,PZ,999,,📦,200,,/images/202.jpg
+203,0,CANDELA MAGICA   30 CM,80,0.51,PZ,999,,📦,80,,/images/203.jpg
+203A,0,CANDELA MAGICA   30 CM,25,1.89,PZ,999,,📦,25,,/images/203A.jpg
+204A,0,CANDELA MAGICA   38 CM,20,3.18,PZ,999,,📦,20,,/images/204A.jpg
+205,0,CANDELA MAGICA   50 CM,72,0.7,PZ,999,,📦,72,,/images/205.jpg
+211,0,MORNING GLORY 30 CM,180,0.78,PZ,999,,📦,180,,/images/211.jpg
+216,0,MAGIC FLAMBE',120,1.04,PZ,999,,📦,120,,/images/216.jpg
+217,0,SUPER CONETTO  Cinese,48,1.54,PZ,999,,📦,48,,/images/217.jpg
+208,0,BENGALA  TRICOLORE,12,5.35,PZ,999,,📦,12,,/images/208.jpg
+212,0,BENGALA CALIFORNIA,24,2.78,PZ,999,,📦,24,,/images/212.jpg
+213,0,BENGALA  Pioggia Scoppiettante,36,2.62,PZ,999,,📦,36,,/images/213.jpg
+229,0,FONTANA CUCKOO,24,3.52,PZ,999,,📦,24,,/images/229.jpg
+125A,0,FONTANA SUPER FLASH,72,2.5,PZ,999,,📦,72,,/images/125A.jpg
+218,0,SUPER CONETTO DIAMANTE,48,2.14,PZ,999,,📦,48,,/images/218.jpg
+221X,0,VULCANO  ARGENTO    CE,24,3.15,PZ,999,,📦,24,,/images/221X.jpg
+221Z,0,VULCANO ORO              CE,24,3.15,PZ,999,,📦,24,,/images/221Z.jpg
+223,0,FONTANE ASSORTITE,24,3.42,PZ,999,,📦,24,,/images/223.jpg
+230,0,HAPPY SPRING FESTIVAL,24,2.92,PZ,999,,📦,24,,/images/230.jpg
+232,0,APE REGINA,24,4.1,PZ,999,,📦,24,,/images/232.jpg
+233,0,FISCHI E COLORI,24,3.41,PZ,999,,📦,24,,/images/233.jpg
+234,0,MAXI FONTANE ASSORTITE,24,5.3,PZ,999,,📦,24,,/images/234.jpg
+265A,0,265AVENUS,12,8.3,PZ,999,,📦,12,,/images/265A.jpg
+265B,0,265B CAROL,12,8.3,PZ,999,,📦,12,,/images/265B.jpg
+0268,0,FONTANA CAPPUCCINO,12,7.65,PZ,999,,📦,12,,/images/0268.jpg
+269A,0,269A MISSISSIPPI,12,6.14,PZ,999,,📦,12,,/images/269A.jpg
+269B,0,269B MISSISSIPPI,12,6.14,PZ,999,,📦,12,,/images/269B.jpg
+271A,0,FONTANA  STELLA,12,9.02,PZ,999,,📦,12,,/images/271A.jpg
+272,0,STRAUSS,12,6.62,PZ,999,,📦,12,,/images/272.jpg
+273A,0,273A CUORE,12,8.51,PZ,999,,📦,12,,/images/273A.jpg
+276A,0,276A Spettacolino 12 effetti,12,7.62,PZ,999,,📦,12,,/images/276A.jpg
+276B,0,276B Spettacolino 12 effetti,12,7.62,PZ,999,,📦,12,,/images/276B.jpg
+277,0,fontana  WOOW,8,8.65,PZ,999,,📦,8,,/images/277.jpg
+277A,0,fontana SUPER MICHELLE,4,16.47,PZ,999,,📦,4,,/images/277A.jpg
+278,0,SINFONIA,18,4.04,PZ,999,,📦,18,,/images/278.jpg
+279A,0,279A DAIANA,18,2.96,PZ,999,,📦,18,,/images/279A.jpg
+279B,0,279B DAHLIA,18,2.96,PZ,999,,📦,18,,/images/279B.jpg
+282A,0,282A SPLENDID,18,2.86,PZ,999,,📦,18,,/images/282A.jpg
+282B,0,282B KITTY,18,2.86,PZ,999,,📦,18,,/images/282B.jpg
+286,0,RE LEONE,18,4.39,PZ,999,,📦,18,,/images/286.jpg
+301,0,301 MAGNOLIA                                                CON ALETTE ANTIRIBALTAMENTO,18,5.5,PZ,999,,📦,18,,/images/301.jpg
+302,0,302 LILY                                                             CON ALETTE ANTIRIBALTAMENTO,18,5.5,PZ,999,,📦,18,,/images/302.jpg
+321,0,321 LILY,12,8,PZ,999,,📦,12,,/images/321.jpg
+0322,0,322 NEW BILLY,12,8,PZ,999,,📦,12,,/images/0322.jpg
+366X,0,366AX  LILY,12,11.5,PZ,999,,📦,12,,/images/366X.jpg
+367AX,0,367AX FIRE FLY,12,11.5,PZ,999,,📦,12,,/images/367AX.jpg
+0501,0,501 NEW WILD BILLY,8,15.6,PZ,999,,📦,8,,/images/0501.jpg
+0502,0,502 MAGNOLIA,8,15.6,PZ,999,,📦,8,,/images/0502.jpg
+0721,0,SUPER SHOW - 280s,1,144,PZ,999,,📦,1,,/images/0721.jpg
+0723,0,NEW CASABLANCA - 200s    I I I,2,72,PZ,999,,📦,2,,/images/0723.jpg
+724A,0,ALESSI PIROSHOW - 200s,2,84,PZ,999,,📦,2,,/images/724A.jpg
+724B,0,ALESSI SUPERSTAR - 200s,2,84,PZ,999,,📦,2,,/images/724B.jpg
+725,0,NAXOS - 238s                        I Z W,1,108,PZ,999,,📦,1,,/images/725.jpg
+726,0,HIPPY - 350s,1,144,PZ,999,,📦,1,,/images/726.jpg
+400,0,CANDELA ROMANA - 20 getti,48,2.9,PZ,999,,📦,48,,/images/400.jpg
+402,0,CANDELA ROMANA - 5 getti,12,8.4,PZ,999,,📦,12,,/images/402.jpg
+409,0,RAZZETTO FISCHIO + COLPO,240,0.75,PZ,999,,📦,240,,/images/409.jpg
+413,0,RAZZO  SATURNO,20,10.2,PZ,999,,📦,20,,/images/413.jpg
+414,0,RAZZO VENERE,12,11.4,PZ,999,,📦,12,,/images/414.jpg
+100C,0,100 colpi,4,24,PZ,999,,📦,4,,/images/100C.jpg
+demon,0,DEMON,100,1.6,PZ,999,,📦,100,,/images/demon.jpg
+mini,0,MINI THOR,50,3.1,PZ,999,,📦,50,,/images/mini.jpg
+mid,0,MID TOHOR,72,2.2,PZ,999,,📦,72,,/images/mid.jpg
