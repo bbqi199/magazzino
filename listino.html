@@ -1,0 +1,2084 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>STARCOMET LISTINO</title>
+<style>
+  /* ===== 全局重置 ===== */
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  :root {
+    --primary: #FF5A1F;
+    --primary-light: #fff3ef;
+    --primary-dark: #e04100;
+    --text: #1a1a1a;
+    --text-2: #666;
+    --text-3: #999;
+    --border: #f0f0f0;
+    --bg: #f5f5f5;
+    --white: #fff;
+    --badge: #FF3B30;
+    --green: #07c160;
+    --radius: 12px;
+    --shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+  html, body { height:100%; font-family: -apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; background:var(--bg); color:var(--text); font-size:14px; line-height:1.5; overflow:hidden; }
+
+  /* ===== 应用容器 ===== */
+  #app { width:100%; max-width:430px; margin:0 auto; height:100vh; height:100dvh; display:flex; flex-direction:column; background:var(--bg); position:relative; overflow:hidden; box-shadow:0 0 30px rgba(0,0,0,0.15); }
+
+  /* ===== 页面容器 ===== */
+  .page { display:none; flex-direction:column; height:100%; overflow:hidden; }
+  .page.active { display:flex; }
+  .page-body { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+  .page-body::-webkit-scrollbar { display:none; }
+
+  /* ===== 顶部导航 ===== */
+  .navbar { background:var(--white); padding:12px 16px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border); position:sticky; top:0; z-index:100; }
+  .navbar-title { font-size:17px; font-weight:600; color:var(--text); }
+  .navbar-left, .navbar-right { display:flex; align-items:center; gap:12px; min-width:40px; }
+  .nav-back { font-size:20px; cursor:pointer; color:var(--text); }
+  .nav-icon { font-size:20px; cursor:pointer; color:var(--text); }
+
+  /* ===== 底部 Tab ===== */
+  .tabbar { background:var(--white); border-top:1px solid var(--border); display:flex; padding:6px 0 calc(6px + env(safe-area-inset-bottom)); flex-shrink:0; }
+  .tab-item { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; cursor:pointer; padding:4px 0; position:relative; }
+  .tab-item .tab-icon { font-size:22px; transition:transform 0.2s; }
+  .tab-item .tab-label { font-size:11px; color:var(--text-3); transition:color 0.2s; }
+  .tab-item.active .tab-label { color:var(--primary); }
+  .tab-item.active .tab-icon { transform:scale(1.1); }
+  .tab-badge { position:absolute; top:0; right:50%; margin-right:-20px; background:var(--badge); color:#fff; font-size:10px; min-width:16px; height:16px; border-radius:8px; display:flex; align-items:center; justify-content:center; padding:0 4px; font-weight:600; }
+
+  /* ===== 首页 ===== */
+  /* 搜索栏 */
+  .search-bar { background:var(--white); padding:10px 16px; }
+  .search-input { background:#f5f5f5; border-radius:20px; display:flex; align-items:center; padding:8px 14px; gap:8px; }
+  .search-input span { font-size:16px; }
+  .search-input input { flex:1; border:none; background:transparent; font-size:14px; color:var(--text); outline:none; }
+  .search-input input::placeholder { color:var(--text-3); }
+
+  /* 轮播banner */
+  .banner-wrap { padding:12px 16px; }
+  .banner { background:linear-gradient(135deg,#FF5A1F,#FF8C42); border-radius:var(--radius); padding:20px; color:#fff; position:relative; overflow:hidden; }
+  .banner h2 { font-size:20px; font-weight:700; margin-bottom:4px; }
+  .banner p { font-size:13px; opacity:0.9; }
+  .banner-tag { display:inline-block; background:rgba(255,255,255,0.25); border-radius:4px; padding:2px 8px; font-size:12px; margin-top:8px; }
+  .banner-emoji { position:absolute; right:20px; top:50%; transform:translateY(-50%); font-size:56px; opacity:0.3; }
+
+  /* 快捷入口 */
+  .quick-entry { background:var(--white); margin:0 0 8px; padding:16px; display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+  .entry-item { display:flex; flex-direction:column; align-items:center; gap:6px; cursor:pointer; }
+  .entry-icon { width:48px; height:48px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:22px; }
+  .entry-label { font-size:12px; color:var(--text-2); text-align:center; }
+
+  /* 分类 + 商品 */
+  .cat-goods { display:flex; flex-direction:column; flex:1; background:var(--white); overflow:hidden; }
+  .cat-list { display:flex; flex-direction:row; overflow-x:auto; background:#fff; border-bottom:1px solid var(--border); flex-shrink:0; padding:0 4px; }
+  .cat-list::-webkit-scrollbar { display:none; }
+  .cat-item { padding:10px 14px; text-align:center; font-size:13px; color:var(--text-2); cursor:pointer; border-bottom:2px solid transparent; white-space:nowrap; flex-shrink:0; line-height:1.3; }
+  .cat-item.active { color:var(--primary); border-bottom-color:var(--primary); font-weight:600; background:none; }
+  .goods-panel { flex:1; overflow-y:auto; padding:8px; }
+  .goods-panel::-webkit-scrollbar { display:none; }
+  .goods-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .goods-card { background:var(--white); border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow); cursor:pointer; border:1px solid var(--border); }
+  .goods-img { width:100%; aspect-ratio:1; font-size:40px; display:flex; align-items:center; justify-content:center; background:#f9f9f9; position:relative; overflow:hidden; }
+  .goods-info { padding:8px; }
+  .goods-name { font-size:13px; font-weight:500; color:var(--text); margin-bottom:2px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; line-height:1.4; }
+  .goods-spec { display:none; }
+  .goods-id { font-size:10px; color:var(--text-3); margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .goods-bottom { display:flex; align-items:center; justify-content:space-between; gap:4px; }
+  .goods-price { font-size:14px; font-weight:700; color:var(--primary); flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .goods-price span { font-size:11px; font-weight:400; color:var(--text-3); }
+  .add-btn { width:26px; height:26px; border-radius:50%; background:var(--primary); color:#fff; border:none; font-size:16px; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; }
+
+  /* 商品列表模式 */
+  .goods-list-item { background:var(--white); border-radius:var(--radius); margin-bottom:8px; padding:12px; display:flex; gap:12px; box-shadow:var(--shadow); cursor:pointer; border:1px solid var(--border); }
+  .goods-list-img { width:80px; height:80px; border-radius:8px; background:#f9f9f9; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:36px; overflow:hidden; }
+  .goods-list-img img { width:100%; height:100%; object-fit:contain; }
+  .goods-list-info { flex:1; display:flex; flex-direction:column; justify-content:space-between; }
+  .goods-list-name { font-size:14px; font-weight:500; color:var(--text); line-height:1.4; }
+  .goods-list-spec { font-size:12px; color:var(--text-3); margin-top:4px; }
+  .goods-list-bottom { display:flex; align-items:center; justify-content:space-between; margin-top:6px; }
+  .goods-unit { font-size:12px; color:var(--text-3); }
+  .stepper { display:flex; align-items:center; gap:6px; }
+  .stepper-btn { width:24px; height:24px; border-radius:50%; background:var(--primary); color:#fff; border:none; font-size:14px; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+  .stepper-btn.minus { background:#f0f0f0; color:var(--text-2); }
+  .stepper-num { font-size:14px; font-weight:600; min-width:20px; text-align:center; color:var(--text); }
+
+  /* ===== 商品详情页 ===== */
+  .detail-img { width:100%; aspect-ratio:1; background:#f5f5f5; display:flex; align-items:center; justify-content:center; font-size:80px; position:relative; overflow:hidden; }
+  .detail-img img { width:100%; height:100%; object-fit:contain; }
+  .detail-content { background:var(--white); padding:16px; margin-bottom:8px; }
+  .detail-name { font-size:17px; font-weight:600; color:var(--text); margin-bottom:8px; line-height:1.4; }
+  .detail-price-row { display:flex; align-items:baseline; gap:8px; margin-bottom:8px; }
+  .detail-price { font-size:24px; font-weight:700; color:var(--primary); }
+  .detail-price-unit { font-size:14px; color:var(--text-3); }
+  .detail-stock { font-size:13px; color:var(--green); }
+  .detail-tags { display:flex; gap:6px; flex-wrap:wrap; margin:10px 0; }
+  .detail-tag { background:var(--primary-light); color:var(--primary); font-size:11px; padding:3px 8px; border-radius:4px; }
+  .detail-section { background:var(--white); padding:16px; margin-bottom:8px; }
+  .detail-section-title { font-size:15px; font-weight:600; color:var(--text); margin-bottom:12px; display:flex; align-items:center; gap:6px; }
+  .detail-section-title::before { content:''; width:3px; height:15px; background:var(--primary); border-radius:2px; display:inline-block; }
+  .spec-list { display:flex; gap:8px; flex-wrap:wrap; }
+  .spec-item { border:1.5px solid var(--border); border-radius:8px; padding:6px 14px; font-size:13px; color:var(--text-2); cursor:pointer; transition:all 0.2s; }
+  .spec-item.active { border-color:var(--primary); color:var(--primary); background:var(--primary-light); }
+  .qty-row { display:flex; align-items:center; justify-content:space-between; margin-top:12px; }
+  .qty-label { font-size:14px; color:var(--text-2); }
+  .qty-stepper { display:flex; align-items:center; gap:12px; }
+  .qty-btn { width:32px; height:32px; border-radius:50%; background:var(--primary); color:#fff; border:none; font-size:18px; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+  .qty-btn.minus { background:#f0f0f0; color:var(--text-2); }
+  .qty-num { font-size:18px; font-weight:700; min-width:30px; text-align:center; }
+  .detail-attrs { display:flex; flex-direction:column; gap:8px; }
+  .attr-row { display:flex; align-items:flex-start; }
+  .attr-label { width:70px; font-size:13px; color:var(--text-3); flex-shrink:0; }
+  .attr-value { font-size:13px; color:var(--text); flex:1; }
+  .detail-footer { background:var(--white); padding:12px 16px calc(12px + env(safe-area-inset-bottom)) 16px; display:flex; gap:10px; border-top:1px solid var(--border); }
+  .btn-cart { flex:1; padding:12px; border:1.5px solid var(--primary); background:var(--primary-light); color:var(--primary); border-radius:24px; font-size:15px; font-weight:600; cursor:pointer; }
+  .btn-buy { flex:1; padding:12px; border:none; background:var(--primary); color:#fff; border-radius:24px; font-size:15px; font-weight:600; cursor:pointer; }
+
+  /* ===== 购物车页 ===== */
+  .cart-header { background:var(--white); padding:12px 16px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border); }
+  .cart-header-title { font-size:17px; font-weight:600; }
+  .cart-clear { font-size:13px; color:var(--text-3); cursor:pointer; }
+  .cart-empty { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; padding:40px; }
+  .cart-empty-icon { font-size:60px; }
+  .cart-empty-text { font-size:15px; color:var(--text-3); }
+  .cart-empty-btn { padding:10px 28px; background:var(--primary); color:#fff; border:none; border-radius:20px; font-size:14px; cursor:pointer; margin-top:8px; }
+  .cart-list { flex:1; overflow-y:auto; padding:8px; }
+  .cart-list::-webkit-scrollbar { display:none; }
+  .cart-item { background:var(--white); border-radius:var(--radius); padding:12px; margin-bottom:8px; display:flex; gap:12px; align-items:center; box-shadow:var(--shadow); }
+  .cart-check { width:20px; height:20px; border-radius:50%; border:2px solid var(--border); display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; transition:all 0.2s; }
+  .cart-check.checked { background:var(--primary); border-color:var(--primary); color:#fff; font-size:12px; }
+  .cart-img { width:68px; height:68px; border-radius:8px; background:#f9f9f9; display:flex; align-items:center; justify-content:center; font-size:32px; flex-shrink:0; overflow:hidden; position:relative; }
+  .cart-img img { width:100%; height:100%; object-fit:contain; }
+  .cart-info { flex:1; }
+  .cart-name { font-size:13px; font-weight:500; color:var(--text); margin-bottom:4px; line-height:1.4; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .cart-spec-text { font-size:11px; color:var(--text-3); margin-bottom:6px; }
+  .cart-row { display:flex; align-items:center; justify-content:space-between; }
+  .cart-price { font-size:15px; font-weight:700; color:var(--primary); }
+  .cart-stepper { display:flex; align-items:center; gap:6px; }
+  .cart-btn { width:22px; height:22px; border-radius:50%; background:var(--primary); color:#fff; border:none; font-size:14px; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+  .cart-btn.minus { background:#f0f0f0; color:var(--text-2); }
+  .cart-num { font-size:13px; font-weight:600; min-width:18px; text-align:center; }
+  .cart-del { font-size:18px; color:var(--text-3); cursor:pointer; padding:4px; }
+  .cart-footer { background:var(--white); padding:12px 16px; border-top:1px solid var(--border); display:flex; align-items:center; gap:12px; }
+  .cart-check-all { display:flex; align-items:center; gap:6px; cursor:pointer; }
+  .cart-check-all-box { width:20px; height:20px; border-radius:50%; border:2px solid var(--border); display:flex; align-items:center; justify-content:center; transition:all 0.2s; }
+  .cart-check-all-box.checked { background:var(--primary); border-color:var(--primary); color:#fff; font-size:12px; }
+  .cart-check-all-label { font-size:13px; color:var(--text-2); }
+  .cart-total-area { flex:1; text-align:right; }
+  .cart-total-text { font-size:13px; color:var(--text-2); }
+  .cart-total-price { font-size:18px; font-weight:700; color:var(--primary); }
+  .cart-total-price span { font-size:12px; color:var(--text-3); font-weight:400; }
+  .cart-submit { padding:12px 22px; background:var(--primary); color:#fff; border:none; border-radius:24px; font-size:15px; font-weight:600; cursor:pointer; white-space:nowrap; }
+  .cart-submit:disabled { background:#ccc; }
+
+  /* ===== 结算页 ===== */
+  .checkout-section { background:var(--white); margin-bottom:8px; border-radius:var(--radius); margin:8px; overflow:hidden; }
+  .checkout-section-header { padding:14px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:8px; }
+  .checkout-section-header .icon { font-size:18px; }
+  .checkout-section-header .label { font-size:15px; font-weight:600; }
+  .address-card { padding:14px 16px; cursor:pointer; }
+  .address-name-row { display:flex; align-items:center; gap:8px; margin-bottom:4px; }
+  .address-name { font-size:15px; font-weight:600; }
+  .address-phone { font-size:14px; color:var(--text-2); }
+  .address-detail { font-size:13px; color:var(--text-2); line-height:1.5; }
+  .address-arrow { color:var(--text-3); font-size:14px; }
+  .no-address { padding:16px; display:flex; align-items:center; justify-content:space-between; cursor:pointer; }
+  .no-address-text { font-size:14px; color:var(--text-3); }
+  .checkout-goods { padding:12px 16px; }
+  .checkout-goods-item { display:flex; align-items:center; gap:12px; padding:8px 0; border-bottom:1px solid var(--border); }
+  .checkout-goods-item:last-child { border-bottom:none; }
+  .checkout-goods-img { width:56px; height:56px; border-radius:8px; background:#f9f9f9; display:flex; align-items:center; justify-content:center; font-size:26px; flex-shrink:0; position:relative; overflow:hidden; }
+  .checkout-goods-info { flex:1; }
+  .checkout-goods-name { font-size:13px; font-weight:500; color:var(--text); margin-bottom:3px; }
+  .checkout-goods-spec { font-size:11px; color:var(--text-3); }
+  .checkout-goods-right { text-align:right; }
+  .checkout-goods-price { font-size:14px; font-weight:700; color:var(--primary); }
+  .checkout-goods-qty { font-size:12px; color:var(--text-3); }
+  .checkout-remark { padding:12px 16px; }
+  .checkout-remark textarea { width:100%; border:1px solid var(--border); border-radius:8px; padding:10px; font-size:14px; color:var(--text); resize:none; outline:none; font-family:inherit; background:#fafafa; }
+  .checkout-summary { padding:12px 16px; display:flex; flex-direction:column; gap:8px; }
+  .summary-row { display:flex; justify-content:space-between; align-items:center; }
+  .summary-label { font-size:14px; color:var(--text-2); }
+  .summary-value { font-size:14px; color:var(--text); }
+  .summary-total { border-top:1px solid var(--border); padding-top:10px; margin-top:2px; }
+  .summary-total .summary-label { font-size:15px; font-weight:600; color:var(--text); }
+  .summary-total .summary-value { font-size:18px; font-weight:700; color:var(--primary); }
+  .checkout-footer { background:var(--white); padding:12px 16px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+  .checkout-total-display { font-size:13px; color:var(--text-2); }
+  .checkout-total-display strong { font-size:18px; color:var(--primary); }
+  .checkout-pay-btn { padding:12px 28px; background:var(--primary); color:#fff; border:none; border-radius:24px; font-size:16px; font-weight:700; cursor:pointer; }
+
+  /* ===== 订单页 ===== */
+  .order-tabs { background:var(--white); display:flex; border-bottom:1px solid var(--border); }
+  .order-tab { flex:1; text-align:center; padding:12px 4px; font-size:13px; color:var(--text-2); cursor:pointer; position:relative; }
+  .order-tab.active { color:var(--primary); font-weight:600; }
+  .order-tab.active::after { content:''; position:absolute; bottom:0; left:50%; transform:translateX(-50%); width:24px; height:2px; background:var(--primary); border-radius:1px; }
+  .order-empty { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; padding:60px 40px; }
+  .order-empty-icon { font-size:60px; }
+  .order-empty-text { font-size:15px; color:var(--text-3); }
+  .order-card { background:var(--white); border-radius:var(--radius); margin:8px; padding:0; overflow:hidden; box-shadow:var(--shadow); }
+  .order-card-header { padding:12px 16px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); }
+  .order-no { font-size:12px; color:var(--text-3); }
+  .order-status { font-size:13px; font-weight:600; }
+  .order-status.pending { color:#FF9500; }
+  .order-status.processing { color:var(--primary); }
+  .order-status.done { color:var(--green); }
+  .order-status.cancelled { color:var(--text-3); }
+  .order-goods-list { padding:12px 16px; display:flex; flex-direction:column; gap:10px; }
+  .order-goods-row { display:flex; gap:10px; align-items:center; }
+  .order-goods-img { width:52px; height:52px; border-radius:8px; background:#f9f9f9; display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0; position:relative; overflow:hidden; }
+  .order-goods-detail { flex:1; }
+  .order-goods-name { font-size:13px; color:var(--text); font-weight:500; }
+  .order-goods-spec { font-size:11px; color:var(--text-3); margin-top:2px; }
+  .order-goods-price-row { font-size:12px; color:var(--text-2); margin-top:3px; }
+  .order-card-footer { padding:10px 16px; display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border); }
+  .order-total-text { font-size:13px; color:var(--text-2); }
+  .order-total-text strong { color:var(--primary); font-size:15px; }
+  .order-action-btns { display:flex; gap:8px; }
+  .order-btn { padding:7px 14px; border-radius:16px; font-size:12px; cursor:pointer; border:1.5px solid var(--border); background:var(--white); color:var(--text-2); }
+  .order-btn.primary { background:var(--primary); color:#fff; border-color:var(--primary); }
+  .order-card-body { padding:0 16px 12px; }
+  .order-addr { font-size:12px; color:var(--text-3); display:flex; align-items:flex-start; gap:4px; margin-top:8px; }
+
+  /* ===== 个人中心 ===== */
+  .profile-header { background:linear-gradient(135deg,#FF5A1F,#FF8C42); padding:30px 20px 40px; color:#fff; }
+  .profile-avatar-row { display:flex; align-items:center; gap:14px; }
+  .profile-avatar { width:60px; height:60px; border-radius:50%; background:rgba(255,255,255,0.3); display:flex; align-items:center; justify-content:center; font-size:28px; border:2px solid rgba(255,255,255,0.5); }
+  .profile-info .name { font-size:18px; font-weight:700; }
+  .profile-info .phone { font-size:13px; opacity:0.85; margin-top:3px; }
+  .profile-stats { background:var(--white); border-radius:var(--radius); margin:-20px 16px 0; padding:14px 0; display:flex; box-shadow:var(--shadow); }
+  .profile-stat { flex:1; text-align:center; }
+  .profile-stat-num { font-size:18px; font-weight:700; color:var(--text); }
+  .profile-stat-label { font-size:12px; color:var(--text-3); margin-top:3px; }
+  .profile-section { background:var(--white); border-radius:var(--radius); margin:12px 12px 0; overflow:hidden; }
+  .profile-menu-item { display:flex; align-items:center; padding:14px 16px; border-bottom:1px solid var(--border); cursor:pointer; }
+  .profile-menu-item:last-child { border-bottom:none; }
+  .menu-icon { font-size:20px; margin-right:12px; }
+  .menu-label { flex:1; font-size:14px; color:var(--text); }
+  .menu-arrow { font-size:14px; color:var(--text-3); }
+  .menu-badge { background:var(--badge); color:#fff; font-size:10px; padding:1px 6px; border-radius:8px; margin-right:8px; }
+
+  /* ===== 地址页 ===== */
+  .addr-card { background:var(--white); border-radius:var(--radius); margin:8px; padding:14px 16px; box-shadow:var(--shadow); }
+  .addr-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px; }
+  .addr-name-phone { display:flex; align-items:center; gap:8px; }
+  .addr-name { font-size:15px; font-weight:600; }
+  .addr-phone { font-size:13px; color:var(--text-2); }
+  .addr-default-tag { background:var(--primary-light); color:var(--primary); font-size:11px; padding:2px 6px; border-radius:4px; }
+  .addr-detail-text { font-size:13px; color:var(--text-2); line-height:1.5; }
+  .addr-actions { display:flex; gap:12px; margin-top:10px; padding-top:10px; border-top:1px solid var(--border); }
+  .addr-action-btn { font-size:13px; color:var(--text-2); cursor:pointer; display:flex; align-items:center; gap:4px; }
+  .addr-action-btn.del { color:#FF3B30; }
+  .add-addr-btn { margin:12px; padding:14px; background:var(--white); border:1.5px dashed var(--primary); border-radius:var(--radius); text-align:center; color:var(--primary); font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; }
+
+  /* ===== 弹窗 ===== */
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; display:flex; align-items:flex-end; justify-content:center; opacity:0; pointer-events:none; transition:opacity 0.25s; }
+  .modal-overlay.show { opacity:1; pointer-events:all; }
+  .modal-box { background:var(--white); border-radius:16px 16px 0 0; width:100%; max-width:430px; max-height:85vh; overflow-y:auto; padding:20px 20px calc(20px + env(safe-area-inset-bottom)); transform:translateY(40px); transition:transform 0.25s; }
+  .modal-overlay.show .modal-box { transform:translateY(0); }
+  .modal-title { font-size:16px; font-weight:700; margin-bottom:16px; text-align:center; }
+  .modal-close { float:right; font-size:20px; color:var(--text-3); cursor:pointer; margin-top:-4px; }
+  .form-item { margin-bottom:14px; }
+  .form-label { font-size:13px; color:var(--text-2); margin-bottom:6px; }
+  .form-input { width:100%; border:1.5px solid var(--border); border-radius:8px; padding:10px 12px; font-size:14px; color:var(--text); outline:none; font-family:inherit; transition:border-color 0.2s; }
+  .form-input:focus { border-color:var(--primary); }
+  .form-row { display:flex; gap:10px; }
+  .form-row .form-item { flex:1; }
+  .form-submit { width:100%; padding:13px; background:var(--primary); color:#fff; border:none; border-radius:24px; font-size:15px; font-weight:600; cursor:pointer; margin-top:6px; }
+
+  /* ===== toast ===== */
+  .toast { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%) scale(0.8); background:rgba(0,0,0,0.75); color:#fff; padding:10px 20px; border-radius:8px; font-size:14px; z-index:9999; opacity:0; transition:all 0.25s; pointer-events:none; white-space:nowrap; }
+  .toast.show { opacity:1; transform:translate(-50%,-50%) scale(1); }
+
+  /* ===== 成功页 ===== */
+  .success-page { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; padding:60px 32px; flex:1; }
+  .success-icon { font-size:72px; }
+  .success-title { font-size:20px; font-weight:700; color:var(--text); }
+  .success-sub { font-size:14px; color:var(--text-3); text-align:center; line-height:1.6; }
+  .success-btns { display:flex; gap:12px; margin-top:12px; }
+  .success-btn { padding:12px 24px; border-radius:24px; font-size:14px; font-weight:600; cursor:pointer; }
+  .success-btn.outline { border:1.5px solid var(--primary); color:var(--primary); background:var(--white); }
+  .success-btn.filled { background:var(--primary); color:#fff; border:none; }
+
+  /* ===== 加载 ===== */
+  .section-loading { text-align:center; padding:40px; color:var(--text-3); font-size:14px; }
+
+  /* ===== 分割线 ===== */
+  .divider { height:8px; background:var(--bg); }
+
+  /* ===== 通用 ===== */
+  .flex-center { display:flex; align-items:center; justify-content:center; }
+  .text-primary { color:var(--primary); }
+  .text-muted { color:var(--text-3); font-size:13px; }
+  .mt-8 { margin-top:8px; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ==================== 首页 ==================== -->
+  <div class="page active" id="page-home">
+    <!-- 搜索栏 -->
+    <div class="search-bar" style="display:flex;gap:8px;align-items:center;">
+      <div class="search-input" style="flex:1;">
+        <span>🔍</span>
+        <input type="text" id="search-input" placeholder="搜索商品名称或编号…"
+          oninput="App.onSearchInput(this.value)"
+          onfocus="App.onSearchFocus()"
+          autocomplete="off">
+        <span id="search-clear" style="display:none;cursor:pointer;color:var(--text-3);font-size:18px;line-height:1;" onclick="App.clearSearch()">×</span>
+      </div>
+      <div onclick="App.showPage('page-manage')" style="width:36px;height:36px;border-radius:50%;background:var(--primary-light);display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;flex-shrink:0;" title="商品管理">⚙️</div>
+    </div>
+    <!-- 搜索结果覆盖层 -->
+    <div id="search-overlay" style="display:none;flex:1;overflow-y:auto;background:var(--bg);-webkit-overflow-scrolling:touch;"></div>
+    <div class="page-body" id="home-body">
+      <!-- Banner -->
+      <div class="banner-wrap">
+        <div class="banner">
+          <h2>DETERSIVI 精选商城</h2>
+          <p>从全市场出发，为你精准搜索最低价，<br>一站式比对、筛选与推荐，<br>帮你省下的不只是钱，更是宝贵的时间与精力。</p>
+          <div class="banner-emoji">🛍️</div>
+        </div>
+      </div>
+      <!-- 快捷入口 -->
+      <div class="quick-entry">
+        <div class="entry-item" onclick="App.switchCat(0)">
+          <div class="entry-icon" style="background:#fff3ef">🏠</div>
+          <div class="entry-label">日用百货</div>
+        </div>
+        <div class="entry-item" onclick="App.switchCat(1)">
+          <div class="entry-icon" style="background:#f0f9eb">🧴</div>
+          <div class="entry-label">洗护用品</div>
+        </div>
+        <div class="entry-item" onclick="App.switchCat(2)">
+          <div class="entry-icon" style="background:#f0f6ff">🍜</div>
+          <div class="entry-label">食品零食</div>
+        </div>
+        <div class="entry-item" onclick="App.switchCat(3)">
+          <div class="entry-icon" style="background:#fff8f0">🧸</div>
+          <div class="entry-label">玩具文具</div>
+        </div>
+        <div class="entry-item" onclick="App.switchCat(4)">
+          <div class="entry-icon" style="background:#f5f0ff">👗</div>
+          <div class="entry-label">服装配饰</div>
+        </div>
+        <div class="entry-item" onclick="App.switchCat(5)">
+          <div class="entry-icon" style="background:#f0fcff">🔧</div>
+          <div class="entry-label">五金工具</div>
+        </div>
+        <div class="entry-item" onclick="App.showToast('即将上线')">
+          <div class="entry-icon" style="background:#fff0f5">💄</div>
+          <div class="entry-label">美妆护肤</div>
+        </div>
+        <div class="entry-item" onclick="App.showToast('即将上线')">
+          <div class="entry-icon" style="background:#f0fff4">🌿</div>
+          <div class="entry-label">更多品类</div>
+        </div>
+      </div>
+      <!-- 分类+商品 -->
+      <div class="cat-goods" id="cat-goods-container" style="min-height:400px;">
+        <div class="cat-list" id="cat-list"></div>
+        <div class="goods-panel" id="goods-panel"></div>
+      </div>
+    </div>
+    <!-- 底部Tab -->
+    <div class="tabbar">
+      <div class="tab-item active" onclick="App.switchTab('home')">
+        <div class="tab-icon">🏠</div>
+        <div class="tab-label">首页</div>
+      </div>
+      <div class="tab-item" onclick="App.switchTab('category')">
+        <div class="tab-icon">📦</div>
+        <div class="tab-label">全部商品</div>
+      </div>
+      <div class="tab-item" onclick="App.switchTab('scan')">
+        <div class="tab-icon">📷</div>
+        <div class="tab-label">扫码</div>
+      </div>
+      <div class="tab-item" onclick="App.switchTab('cart')">
+        <div class="tab-icon">🛒</div>
+        <div class="tab-label">购物车</div>
+        <div class="tab-badge" id="cart-badge" style="display:none">0</div>
+      </div>
+      <div class="tab-item" onclick="App.switchTab('order')">
+        <div class="tab-icon">📋</div>
+        <div class="tab-label">我的订单</div>
+      </div>
+      <div class="tab-item" onclick="App.switchTab('profile')">
+        <div class="tab-icon">👤</div>
+        <div class="tab-label">我的</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 全部商品页 ==================== -->
+  <div class="page" id="page-category">
+    <div class="navbar">
+      <div class="navbar-left"></div>
+      <div class="navbar-title">全部商品</div>
+      <div class="navbar-right"><span class="nav-icon" onclick="App.toggleCatSearch()">🔍</span></div>
+    </div>
+    <!-- 全部商品页搜索栏（默认隐藏） -->
+    <div id="cat-search-bar" style="display:none;padding:8px 16px;background:var(--white);border-bottom:1px solid var(--border);">
+      <div class="search-input">
+        <span>🔍</span>
+        <input type="text" id="cat-search-input" placeholder="搜索商品名称或编号…"
+          oninput="App.onCatSearchInput(this.value)"
+          autocomplete="off">
+        <span id="cat-search-clear" style="display:none;cursor:pointer;color:var(--text-3);font-size:18px;line-height:1;" onclick="App.clearCatSearch()">×</span>
+      </div>
+    </div>
+    <div class="page-body" style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
+      <div class="cat-list" id="cat-list2"></div>
+      <div class="goods-panel" id="goods-panel2" style="flex:1;overflow-y:auto;"></div>
+    </div>
+    <div class="tabbar">
+      <div class="tab-item" onclick="App.switchTab('home')"><div class="tab-icon">🏠</div><div class="tab-label">首页</div></div>
+      <div class="tab-item active" onclick="App.switchTab('category')"><div class="tab-icon">📦</div><div class="tab-label">全部商品</div></div>
+      <div class="tab-item" onclick="App.switchTab('scan')"><div class="tab-icon">📷</div><div class="tab-label">扫码</div></div>
+      <div class="tab-item" onclick="App.switchTab('cart')"><div class="tab-icon">🛒</div><div class="tab-label">购物车</div><div class="tab-badge" id="cart-badge2" style="display:none">0</div></div>
+      <div class="tab-item" onclick="App.switchTab('order')"><div class="tab-icon">📋</div><div class="tab-label">我的订单</div></div>
+      <div class="tab-item" onclick="App.switchTab('profile')"><div class="tab-icon">👤</div><div class="tab-label">我的</div></div>
+    </div>
+  </div>
+
+  <!-- ==================== 商品详情页 ==================== -->
+  <div class="page" id="page-detail">
+    <div class="navbar">
+      <div class="navbar-left"><span class="nav-back" onclick="App.goBack()">←</span></div>
+      <div class="navbar-title">商品详情</div>
+      <div class="navbar-right"><span class="nav-icon" onclick="App.switchTab('cart')">🛒</span></div>
+    </div>
+    <div class="page-body" id="detail-body"></div>
+    <div id="detail-footer"></div>
+  </div>
+
+  <!-- ==================== 购物车页 ==================== -->
+  <div class="page" id="page-cart">
+    <div class="cart-header">
+      <div class="cart-header-title">购物车 🛒</div>
+      <div class="cart-clear" onclick="App.clearCart()">清空</div>
+    </div>
+    <div id="cart-content" style="flex:1;display:flex;flex-direction:column;overflow:hidden;"></div>
+    <div class="tabbar">
+      <div class="tab-item" onclick="App.switchTab('home')"><div class="tab-icon">🏠</div><div class="tab-label">首页</div></div>
+      <div class="tab-item" onclick="App.switchTab('category')"><div class="tab-icon">📦</div><div class="tab-label">全部商品</div></div>
+      <div class="tab-item" onclick="App.switchTab('scan')"><div class="tab-icon">📷</div><div class="tab-label">扫码</div></div>
+      <div class="tab-item active" onclick="App.switchTab('cart')"><div class="tab-icon">🛒</div><div class="tab-label">购物车</div></div>
+      <div class="tab-item" onclick="App.switchTab('order')"><div class="tab-icon">📋</div><div class="tab-label">我的订单</div></div>
+      <div class="tab-item" onclick="App.switchTab('profile')"><div class="tab-icon">👤</div><div class="tab-label">我的</div></div>
+    </div>
+  </div>
+
+  <!-- ==================== 结算页 ==================== -->
+  <div class="page" id="page-checkout">
+    <div class="navbar">
+      <div class="navbar-left"><span class="nav-back" onclick="App.goBack()">←</span></div>
+      <div class="navbar-title">确认订单</div>
+      <div class="navbar-right"></div>
+    </div>
+    <div class="page-body" id="checkout-body"></div>
+    <div id="checkout-footer"></div>
+  </div>
+
+  <!-- ==================== 订单成功页 ==================== -->
+  <div class="page" id="page-success">
+    <div class="navbar">
+      <div class="navbar-left"></div>
+      <div class="navbar-title">提交成功</div>
+      <div class="navbar-right"></div>
+    </div>
+    <div class="page-body flex-center">
+      <div class="success-page">
+        <div class="success-icon">🎉</div>
+        <div class="success-title">订单提交成功！</div>
+        <div class="success-sub">感谢您的订购，商家将尽快确认并安排发货<br>请在"我的订单"中查看进度</div>
+        <div class="success-btns">
+          <button class="success-btn outline" onclick="App.switchTab('home')">继续购货</button>
+          <button class="success-btn filled" onclick="App.switchTab('order')">查看订单</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 订单页 ==================== -->
+  <div class="page" id="page-order">
+    <div class="navbar">
+      <div class="navbar-left"></div>
+      <div class="navbar-title">我的订单</div>
+      <div class="navbar-right"></div>
+    </div>
+    <div class="order-tabs" id="order-tabs">
+      <div class="order-tab active" onclick="App.switchOrderTab(0)">全部</div>
+      <div class="order-tab" onclick="App.switchOrderTab(1)">待确认</div>
+      <div class="order-tab" onclick="App.switchOrderTab(2)">备货中</div>
+      <div class="order-tab" onclick="App.switchOrderTab(3)">已完成</div>
+    </div>
+    <div class="page-body" id="order-body"></div>
+    <div class="tabbar">
+      <div class="tab-item" onclick="App.switchTab('home')"><div class="tab-icon">🏠</div><div class="tab-label">首页</div></div>
+      <div class="tab-item" onclick="App.switchTab('category')"><div class="tab-icon">📦</div><div class="tab-label">全部商品</div></div>
+      <div class="tab-item" onclick="App.switchTab('scan')"><div class="tab-icon">📷</div><div class="tab-label">扫码</div></div>
+      <div class="tab-item" onclick="App.switchTab('cart')"><div class="tab-icon">🛒</div><div class="tab-label">购物车</div><div class="tab-badge" id="cart-badge3" style="display:none">0</div></div>
+      <div class="tab-item active" onclick="App.switchTab('order')"><div class="tab-icon">📋</div><div class="tab-label">我的订单</div></div>
+      <div class="tab-item" onclick="App.switchTab('profile')"><div class="tab-icon">👤</div><div class="tab-label">我的</div></div>
+    </div>
+  </div>
+
+  <!-- ==================== 个人中心 ==================== -->
+  <div class="page" id="page-profile">
+    <div class="page-body">
+      <div class="profile-header">
+        <div class="profile-avatar-row">
+          <div class="profile-avatar">👤</div>
+          <div class="profile-info">
+            <div class="name" id="profile-name">请登录/注册</div>
+            <div class="phone" id="profile-phone">点击完善信息</div>
+          </div>
+        </div>
+      </div>
+      <div class="profile-stats" id="profile-stats">
+        <div class="profile-stat"><div class="profile-stat-num" id="stat-total">0</div><div class="profile-stat-label">全部订单</div></div>
+        <div class="profile-stat"><div class="profile-stat-num" id="stat-pending">0</div><div class="profile-stat-label">待确认</div></div>
+        <div class="profile-stat"><div class="profile-stat-num" id="stat-processing">0</div><div class="profile-stat-label">备货中</div></div>
+        <div class="profile-stat"><div class="profile-stat-num" id="stat-done">0</div><div class="profile-stat-label">已完成</div></div>
+      </div>
+      <div style="height:16px;"></div>
+      <div class="profile-section">
+        <div class="profile-menu-item" onclick="App.showPage('page-address')">
+          <span class="menu-icon">📍</span><span class="menu-label">收货地址</span><span class="menu-arrow">›</span>
+        </div>
+        <div class="profile-menu-item" onclick="App.switchTab('order')">
+          <span class="menu-icon">📋</span><span class="menu-label">我的订单</span><span class="menu-arrow">›</span>
+        </div>
+        <div class="profile-menu-item" onclick="App.showEditProfile()">
+          <span class="menu-icon">✏️</span><span class="menu-label">编辑资料</span><span class="menu-arrow">›</span>
+        </div>
+        <div class="profile-menu-item" onclick="App.showToast('功能开发中…')">
+          <span class="menu-icon">📞</span><span class="menu-label">联系客服</span><span class="menu-arrow">›</span>
+        </div>
+        <div class="profile-menu-item" onclick="App.showToast('功能开发中…')">
+          <span class="menu-icon">⚙️</span><span class="menu-label">设置</span><span class="menu-arrow">›</span>
+        </div>
+        <div class="profile-menu-item" onclick="App.clearAllData()" style="color:#e53e3e;">
+          <span class="menu-icon">🗑️</span><span class="menu-label" style="color:#e53e3e;">清除所有数据</span><span class="menu-arrow" style="color:#e53e3e;">›</span>
+        </div>
+      </div>
+      <div style="height:20px;"></div>
+    </div>
+    <div class="tabbar">
+      <div class="tab-item" onclick="App.switchTab('home')"><div class="tab-icon">🏠</div><div class="tab-label">首页</div></div>
+      <div class="tab-item" onclick="App.switchTab('category')"><div class="tab-icon">📦</div><div class="tab-label">全部商品</div></div>
+      <div class="tab-item" onclick="App.switchTab('scan')"><div class="tab-icon">📷</div><div class="tab-label">扫码</div></div>
+      <div class="tab-item" onclick="App.switchTab('cart')"><div class="tab-icon">🛒</div><div class="tab-label">购物车</div><div class="tab-badge" id="cart-badge4" style="display:none">0</div></div>
+      <div class="tab-item" onclick="App.switchTab('order')"><div class="tab-icon">📋</div><div class="tab-label">我的订单</div></div>
+      <div class="tab-item active" onclick="App.switchTab('profile')"><div class="tab-icon">👤</div><div class="tab-label">我的</div></div>
+    </div>
+  </div>
+
+  <!-- ==================== 扫码页 ==================== -->
+  <div class="page" id="page-scan">
+    <div class="navbar">
+      <div class="navbar-left"></div>
+      <div class="navbar-title">扫码录入</div>
+      <div class="navbar-right"></div>
+    </div>
+    <div class="page-body" style="padding:16px;display:flex;flex-direction:column;gap:14px;">
+
+      <!-- 输入区 -->
+      <div style="background:var(--white);border-radius:12px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
+        <div style="font-size:13px;color:var(--text-2);margin-bottom:10px;">📷 将条形码对准扫码枪，或手动输入商品编号：</div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input type="text" id="scan-input"
+            placeholder="扫描或输入条形码…"
+            style="flex:1;border:1.5px solid var(--border);border-radius:8px;padding:10px 14px;font-size:16px;color:var(--text);outline:none;background:#fafafa;"
+            onfocus="this.style.borderColor='var(--primary)'"
+            onblur="this.style.borderColor='var(--border)'"
+            onkeydown="if(event.key==='Enter')App.scanAdd()">
+          <button onclick="App.scanAdd()"
+            style="padding:10px 18px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;white-space:nowrap;">
+            加入
+          </button>
+        </div>
+        <div style="font-size:11px;color:var(--text-3);margin-top:8px;">扫码枪扫描后自动加入，无需点击按钮</div>
+      </div>
+
+      <!-- 本次扫码记录 -->
+      <div style="background:var(--white);border-radius:12px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <span style="font-size:14px;font-weight:600;color:var(--text);">本次扫码记录</span>
+          <span onclick="App.scanClearLog()" style="font-size:12px;color:var(--text-3);cursor:pointer;">清空记录</span>
+        </div>
+        <div id="scan-log" style="display:flex;flex-direction:column;gap:8px;">
+          <div style="text-align:center;color:var(--text-3);font-size:13px;padding:20px 0;">暂无记录，开始扫码吧～</div>
+        </div>
+      </div>
+
+      <!-- 快捷按钮 -->
+      <button onclick="App.switchTab('cart')"
+        style="width:100%;padding:13px;background:var(--primary);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;">
+        🛒 去购物车结算
+      </button>
+    </div>
+    <div class="tabbar">
+      <div class="tab-item" onclick="App.switchTab('home')"><div class="tab-icon">🏠</div><div class="tab-label">首页</div></div>
+      <div class="tab-item" onclick="App.switchTab('category')"><div class="tab-icon">📦</div><div class="tab-label">全部商品</div></div>
+      <div class="tab-item active" onclick="App.switchTab('scan')"><div class="tab-icon">📷</div><div class="tab-label">扫码</div></div>
+      <div class="tab-item" onclick="App.switchTab('cart')"><div class="tab-icon">🛒</div><div class="tab-label">购物车</div><div class="tab-badge" id="cart-badge5" style="display:none">0</div></div>
+      <div class="tab-item" onclick="App.switchTab('order')"><div class="tab-icon">📋</div><div class="tab-label">我的订单</div></div>
+      <div class="tab-item" onclick="App.switchTab('profile')"><div class="tab-icon">👤</div><div class="tab-label">我的</div></div>
+    </div>
+  </div>
+
+  <!-- ==================== 地址管理页 ==================== -->
+  <div class="page" id="page-address">
+    <div class="navbar">
+      <div class="navbar-left"><span class="nav-back" onclick="App.goBack()">←</span></div>
+      <div class="navbar-title">收货地址</div>
+      <div class="navbar-right"></div>
+    </div>
+    <div class="page-body" id="address-body"></div>
+  </div>
+
+  <!-- ==================== 商品管理页 ==================== -->
+  <div class="page" id="page-manage">
+    <div class="navbar">
+      <div class="navbar-left"><span class="nav-back" onclick="App.goBack()">←</span></div>
+      <div class="navbar-title">商品管理</div>
+      <div class="navbar-right"></div>
+    </div>
+    <div class="page-body" style="padding:12px;">
+
+      <!-- 导入区 -->
+      <div style="background:#fff;border-radius:12px;overflow:hidden;margin-bottom:12px;box-shadow:var(--shadow);">
+        <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;">
+          <span style="font-size:18px;">📥</span>
+          <span style="font-size:15px;font-weight:600;">从Excel导入商品</span>
+        </div>
+        <div style="padding:16px;">
+          <div style="background:var(--primary-light);border-radius:10px;padding:14px;margin-bottom:14px;font-size:13px;color:var(--primary);line-height:1.8;">
+            <b>支持格式：</b>.xlsx / .xls<br>
+            <b>必填列：</b>商品编号、所属分类ID、商品名称、规格描述、单价、计量单位<br>
+            <b>🖼️ 图片自动匹配：</b>商品编号若与图片库文件名一致，无需填图片列，自动显示！<br>
+            <b>注意：</b>导入后将覆盖当前所有商品数据
+          </div>
+          <!-- 拖拽/点击上传区 -->
+          <div id="drop-zone" style="border:2px dashed #FF5A1F;border-radius:12px;padding:28px 16px;text-align:center;cursor:pointer;transition:background 0.2s;"
+            onclick="document.getElementById('excel-input').click()"
+            ondragover="event.preventDefault();this.style.background='var(--primary-light)'"
+            ondragleave="this.style.background=''"
+            ondrop="App.handleFileDrop(event)">
+            <div style="font-size:40px;margin-bottom:8px;">📊</div>
+            <div style="font-size:14px;color:var(--primary);font-weight:600;">点击或拖拽 Excel 文件到此处</div>
+            <div style="font-size:12px;color:var(--text-3);margin-top:4px;">支持 .xlsx / .xls 格式</div>
+          </div>
+          <input type="file" id="excel-input" accept=".xlsx,.xls" style="display:none" onchange="App.handleFileSelect(this)">
+          <!-- 解析结果预览 -->
+          <div id="import-preview" style="display:none;margin-top:14px;"></div>
+          <!-- 确认导入按钮 -->
+          <button id="import-confirm-btn" style="display:none;width:100%;margin-top:12px;padding:13px;background:var(--primary);color:#fff;border:none;border-radius:24px;font-size:15px;font-weight:600;cursor:pointer;" onclick="App.confirmImport()">✅ 确认导入商品数据</button>
+        </div>
+      </div>
+
+      <!-- 导出当前数据 -->
+      <div style="background:#fff;border-radius:12px;overflow:hidden;margin-bottom:12px;box-shadow:var(--shadow);">
+        <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;">
+          <span style="font-size:18px;">📤</span>
+          <span style="font-size:15px;font-weight:600;">导出当前商品数据</span>
+        </div>
+        <div style="padding:16px;">
+          <div style="font-size:13px;color:var(--text-2);margin-bottom:12px;line-height:1.7;">
+            将当前所有商品数据导出为 Excel 文件，可在 Excel 中编辑后再重新导入。
+          </div>
+          <button onclick="App.exportGoods()" style="width:100%;padding:12px;background:#fff;border:1.5px solid var(--primary);color:var(--primary);border-radius:24px;font-size:14px;font-weight:600;cursor:pointer;">📥 导出为 Excel 文件</button>
+        </div>
+      </div>
+
+      <!-- 商品统计 -->
+      <div style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:var(--shadow);">
+        <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;">
+          <span style="font-size:18px;">📊</span>
+          <span style="font-size:15px;font-weight:600;">当前商品统计</span>
+        </div>
+        <div style="padding:16px;" id="goods-stats"></div>
+      </div>
+
+      <div style="height:20px;"></div>
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+<!-- ==================== 弹窗：地址编辑 ==================== -->
+<div class="modal-overlay" id="modal-address" onclick="App.closeModal('modal-address',event)">
+  <div class="modal-box">
+    <div class="modal-title">收货地址 <span class="modal-close" onclick="App.closeModal('modal-address')">×</span></div>
+    <div class="form-row">
+      <div class="form-item"><div class="form-label">姓名</div><input class="form-input" id="addr-name" placeholder="请输入收货人姓名"></div>
+      <div class="form-item"><div class="form-label">电话</div><input class="form-input" id="addr-phone" placeholder="请输入手机号" type="tel"></div>
+    </div>
+    <div class="form-item"><div class="form-label">省市区</div><input class="form-input" id="addr-region" placeholder="如：广东省 深圳市 南山区"></div>
+    <div class="form-item"><div class="form-label">详细地址</div><input class="form-input" id="addr-detail" placeholder="街道、门牌号等详细地址"></div>
+    <button class="form-submit" onclick="App.saveAddress()">保存地址</button>
+  </div>
+</div>
+
+<!-- ==================== 弹窗：编辑资料 ==================== -->
+<div class="modal-overlay" id="modal-profile" onclick="App.closeModal('modal-profile',event)">
+  <div class="modal-box">
+    <div class="modal-title">编辑资料 <span class="modal-close" onclick="App.closeModal('modal-profile')">×</span></div>
+    <div class="form-item"><div class="form-label">姓名/店铺名</div><input class="form-input" id="edit-name" placeholder="请输入您的姓名或店铺名"></div>
+    <div class="form-item"><div class="form-label">手机号</div><input class="form-input" id="edit-phone" placeholder="请输入手机号" type="tel"></div>
+    <button class="form-submit" onclick="App.saveProfile()">保存</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// =====================================================
+// 数据：商品分类 & 商品列表
+// =====================================================
+const CATEGORIES = [
+  { id:0, name:'日用百货', icon:'🏠' },
+  { id:1, name:'洗护用品', icon:'🧴' },
+  { id:2, name:'食品零食', icon:'🍜' },
+  { id:3, name:'玩具文具', icon:'🧸' },
+  { id:4, name:'服装配饰', icon:'👗' },
+  { id:5, name:'五金工具', icon:'🔧' },
+];
+
+const GOODS_DATA = [];
+
+// =====================================================
+// App 主逻辑
+// =====================================================
+const App = (function(){
+  let state = {
+    currentTab: 'home',
+    currentPage: 'page-home',
+    pageStack: [],
+    currentCat: 0,
+    currentCat2: 0,
+    currentGood: null,
+    currentSpec: null,
+    currentQty: 1,
+    cartItems: [],
+    orders: [],
+    addresses: [],
+    profile: { name:'', phone:'' },
+    orderTabIdx: 0,
+    editAddrIdx: -1,
+  };
+
+  // ---------- 持久化 ----------
+  function save(){
+    localStorage.setItem('sc_cart', JSON.stringify(state.cartItems));
+    localStorage.setItem('sc_orders', JSON.stringify(state.orders));
+    localStorage.setItem('sc_addresses', JSON.stringify(state.addresses));
+    localStorage.setItem('sc_profile', JSON.stringify(state.profile));
+  }
+  function load(){
+    try { state.cartItems = JSON.parse(localStorage.getItem('sc_cart')||'[]'); } catch(e){}
+    try { state.orders = JSON.parse(localStorage.getItem('sc_orders')||'[]'); } catch(e){}
+    try { state.addresses = JSON.parse(localStorage.getItem('sc_addresses')||'[]'); } catch(e){}
+    try { state.profile = JSON.parse(localStorage.getItem('sc_profile')||'{}'); state.profile = Object.assign({name:'',phone:''},state.profile); } catch(e){}
+  }
+
+  // ---------- 工具 ----------
+  function showToast(msg){
+    const t=document.getElementById('toast');
+    t.textContent=msg; t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'),1800);
+  }
+  function $(id){ return document.getElementById(id); }
+  function formatPrice(n){ return '¥'+n.toFixed(2); }
+
+  // ==================== 搜索功能 ====================
+  let _searchTimer = null;
+
+  // 高亮关键词（提取为独立函数，避免嵌套模板字符串问题）
+  function highlightKeyword(text, kw){
+    if(!text || !kw) return String(text||'');
+    const escaped = kw.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+    const reg = new RegExp('(' + escaped + ')', 'gi');
+    return String(text).replace(reg, '<mark style="background:#fff3ef;color:var(--primary);border-radius:2px;padding:0 1px;">$1</mark>');
+  }
+
+  function onSearchFocus(){
+    const val = $('search-input').value.trim();
+    if(val) renderSearchResults(val);
+  }
+
+  function onSearchInput(val){
+    const clearBtn = $('search-clear');
+    if(clearBtn) clearBtn.style.display = val ? 'block' : 'none';
+    clearTimeout(_searchTimer);
+    if(!val.trim()){
+      hideSearchOverlay();
+      return;
+    }
+    _searchTimer = setTimeout(function(){ renderSearchResults(val.trim()); }, 150);
+  }
+
+  function clearSearch(){
+    const input = $('search-input');
+    if(input){ input.value = ''; input.focus(); }
+    const clearBtn = $('search-clear');
+    if(clearBtn) clearBtn.style.display = 'none';
+    hideSearchOverlay();
+  }
+
+  function hideSearchOverlay(){
+    const overlay = $('search-overlay');
+    const body = $('home-body');
+    if(overlay) overlay.style.display = 'none';
+    if(body) body.style.display = '';
+  }
+
+  function renderSearchResults(keyword){
+    const overlay = $('search-overlay');
+    const body = $('home-body');
+    if(!overlay) return;
+
+    overlay.style.display = 'block';
+    if(body) body.style.display = 'none';
+
+    const kw = keyword.toLowerCase();
+    const results = GOODS_DATA.filter(function(g){
+      return String(g.id).toLowerCase().includes(kw) ||
+        (g.name && g.name.toLowerCase().includes(kw)) ||
+        (g.spec && g.spec.toLowerCase().includes(kw));
+    });
+
+    if(results.length === 0){
+      overlay.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;color:var(--text-3);">'
+        + '<div style="font-size:48px;margin-bottom:12px;">🔍</div>'
+        + '<div style="font-size:15px;">没有找到"<b style="color:var(--text-2);">' + keyword + '</b>"相关商品</div>'
+        + '<div style="font-size:13px;margin-top:6px;">试试其他关键词或商品编号</div>'
+        + '</div>';
+      return;
+    }
+
+    const SHOW_MAX = 100;
+    const showResults = results.slice(0, SHOW_MAX);
+    const hasMore = results.length > SHOW_MAX;
+
+    let html = '<div style="padding:10px 16px 6px;font-size:13px;color:var(--text-3);">找到 <b style="color:var(--primary);">' + results.length + '</b> 个商品'
+      + (hasMore ? '，显示前 <b style="color:var(--primary);">' + SHOW_MAX + '</b> 条，请输入更精确的关键词' : '')
+      + '</div>'
+      + '<div style="display:flex;flex-direction:column;gap:0;">';
+
+    showResults.forEach(function(g){
+      const imgUrl = g.imageUrl || ('images/' + g.id + '.jpg');
+      const emoji = g.emoji || '📦';
+      html += '<div onclick="App.openDetail(\'' + g.id + '\')"'
+        + ' style="display:flex;align-items:center;gap:10px;background:var(--white);padding:9px 14px;border-bottom:1px solid var(--border);cursor:pointer;">'
+        + '<div style="width:48px;height:48px;border-radius:8px;overflow:hidden;flex-shrink:0;background:#f5f5f5;position:relative;">'
+        + '<img src="' + imgUrl + '" alt="' + g.name + '" style="width:100%;height:100%;object-fit:contain;" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">'
+        + '<span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:20px;position:absolute;top:0;left:0;">' + emoji + '</span>'
+        + '</div>'
+        + '<div style="flex:1;min-width:0;">'
+        + '<div style="font-size:13px;font-weight:500;color:var(--text);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;line-height:1.35;margin-bottom:3px;">' + highlightKeyword(g.name, kw) + '</div>'
+        + '<div style="font-size:11px;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">编号：' + highlightKeyword(g.id, kw) + (g.spec ? ' · ' + highlightKeyword(g.spec, kw) : '') + '</div>'
+        + '</div>'
+        + '<div style="text-align:right;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:6px;">'
+        + '<div style="font-size:15px;font-weight:700;color:var(--primary);">' + formatPrice(g.price) + '<span style="font-size:11px;font-weight:400;color:var(--text-3);">/' + g.unit + '</span></div>'
+        + '<button onclick="event.stopPropagation();App.quickAddCart(\'' + g.id + '\')"'
+        + ' style="background:var(--primary);color:#fff;border:none;border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;letter-spacing:0.5px;">🛒 加入购物车</button>'
+        + '</div>'
+        + '</div>';
+    });
+
+    html += '</div>';
+    overlay.innerHTML = html;
+  }
+  // ==================== 搜索功能 END ====================
+
+  // ==================== 全部商品页搜索 ====================
+  function toggleCatSearch(){
+    const bar = $('cat-search-bar');
+    if(!bar) return;
+    if(bar.style.display === 'none'){
+      bar.style.display = 'block';
+      const inp = $('cat-search-input');
+      if(inp){ inp.value = ''; inp.focus(); }
+    } else {
+      clearCatSearch();
+      bar.style.display = 'none';
+    }
+  }
+
+  function onCatSearchInput(val){
+    const clearBtn = $('cat-search-clear');
+    if(clearBtn) clearBtn.style.display = val ? 'block' : 'none';
+    const panel = $('goods-panel2');
+    if(!panel) return;
+    if(!val.trim()){
+      // 恢复正常分类商品列表
+      const activeCat = document.querySelector('#cat-list2 .cat-item.active');
+      if(activeCat) activeCat.click();
+      return;
+    }
+    const kw = val.trim().toLowerCase();
+    const results = GOODS_DATA.filter(function(g){
+      return String(g.id).toLowerCase().includes(kw) ||
+        (g.name && g.name.toLowerCase().includes(kw)) ||
+        (g.spec && g.spec.toLowerCase().includes(kw));
+    });
+    if(results.length === 0){
+      panel.innerHTML = '<div style="padding:40px 0;text-align:center;color:var(--text-3);font-size:14px;">未找到相关商品</div>';
+      return;
+    }
+    const SHOW_MAX2 = 100;
+    const showResults2 = results.slice(0, SHOW_MAX2);
+    const hasMore2 = results.length > SHOW_MAX2;
+    const kw2 = val.trim().toLowerCase();
+    let html2 = '<div style="padding:8px 14px 4px;font-size:12px;color:var(--text-3);">找到 <b style="color:var(--primary);">'+ results.length +'</b> 个'
+      + (hasMore2 ? '，显示前 <b style="color:var(--primary);">' + SHOW_MAX2 + '</b> 条，请输入更精确关键词' : '')
+      + '</div><div style="display:flex;flex-direction:column;gap:0;">';
+    showResults2.forEach(function(g){
+      const imgUrl2 = g.imageUrl || ('images/' + g.id + '.jpg');
+      const emoji2 = g.emoji || '📦';
+      html2 += '<div onclick="App.openDetail(\'' + g.id + '\')"'
+        + ' style="display:flex;align-items:center;gap:10px;background:var(--white);padding:9px 14px;border-bottom:1px solid var(--border);cursor:pointer;">'
+        + '<div style="width:48px;height:48px;border-radius:8px;overflow:hidden;flex-shrink:0;background:#f5f5f5;position:relative;">'
+        + '<img src="' + imgUrl2 + '" alt="' + g.name + '" style="width:100%;height:100%;object-fit:contain;" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">'
+        + '<span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:20px;position:absolute;top:0;left:0;">' + emoji2 + '</span>'
+        + '</div>'
+        + '<div style="flex:1;min-width:0;">'
+        + '<div style="font-size:13px;font-weight:500;color:var(--text);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;line-height:1.35;margin-bottom:3px;">' + highlightKeyword(g.name, kw2) + '</div>'
+        + '<div style="font-size:11px;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">编号：' + highlightKeyword(g.id, kw2) + (g.spec ? ' · ' + highlightKeyword(g.spec, kw2) : '') + '</div>'
+        + '</div>'
+        + '<div style="text-align:right;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:6px;">'
+        + '<div style="font-size:15px;font-weight:700;color:var(--primary);">' + formatPrice(g.price) + '<span style="font-size:11px;font-weight:400;color:var(--text-3);">/' + g.unit + '</span></div>'
+        + '<button onclick="event.stopPropagation();App.quickAddCart(\'' + g.id + '\')"'
+        + ' style="background:var(--primary);color:#fff;border:none;border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;letter-spacing:0.5px;">🛒 加入购物车</button>'
+        + '</div>'
+        + '</div>';
+    });
+    html2 += '</div>';
+    panel.innerHTML = html2;
+  }
+
+  function clearCatSearch(){
+    const inp = $('cat-search-input');
+    if(inp){ inp.value = ''; }
+    const clearBtn = $('cat-search-clear');
+    if(clearBtn) clearBtn.style.display = 'none';
+    // 恢复正常商品列表
+    const activeCat = document.querySelector('#cat-list2 .cat-item.active');
+    if(activeCat) activeCat.click();
+  }
+  // ==================== 全部商品页搜索 END ====================
+
+
+
+  // ---------- 图片辅助：根据商品编号自动匹配本地图片 ----------
+  // 图片服务器路径：/images/商品编号.jpg
+  // 若未找到则显示emoji兜底
+  const _imgCache = {}; // id → url | null (null=无图)
+
+  function getImgUrl(g){
+    // images2/ 优先，回退 images/
+    const raw = (g.imageUrl && g.imageUrl.trim()) ? g.imageUrl.trim() : `images/${g.id}.jpg`;
+    return raw.replace(/^images\//, 'images2/');
+  }
+  function getImgUrlFallback(g){
+    const raw = (g.imageUrl && g.imageUrl.trim()) ? g.imageUrl.trim() : `images/${g.id}.jpg`;
+    return raw.replace(/^images2\//, 'images/');
+  }
+
+  // 生成商品图片HTML：<img> + onerror回退emoji
+  function goodsImgHtml(g, cls='goods-img', extraStyle=''){
+    const url = getImgUrl(g);
+    const urlFallback = getImgUrlFallback(g);
+    const fallback = g.emoji || '\u{1F4E6}';
+    return `<div class="${cls}" style="position:relative;overflow:hidden;${extraStyle}">
+      <img src="${url}" alt="${g.name}"
+        style="width:100%;height:100%;object-fit:contain;position:absolute;top:0;left:0;"
+        onerror="if(this.src!=='${urlFallback}'){this.src='${urlFallback}';}else{this.style.display='none';this.nextElementSibling.style.display='flex';}">
+      <span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:inherit;position:absolute;top:0;left:0;">${fallback}</span>
+    </div>`;
+  }
+  function genOrderNo(){ return 'YG'+Date.now().toString().slice(-10)+Math.floor(Math.random()*100); }
+
+  // ---------- 页面切换 ----------
+  function switchTab(tab){
+    state.currentTab = tab;
+    const map = { home:'page-home',category:'page-category',cart:'page-cart',order:'page-order',profile:'page-profile',scan:'page-scan' };
+    showPage(map[tab], false);
+    if(tab==='cart') renderCart();
+    if(tab==='order') renderOrders();
+    if(tab==='profile') renderProfile();
+    if(tab==='category') renderCatPanel();
+    if(tab==='scan'){
+      // 切换到扫码页后自动聚焦输入框
+      setTimeout(function(){ const el=$('scan-input'); if(el) el.focus(); }, 100);
+    }
+  }
+  function showPage(pageId, pushStack=true){
+    if(pushStack) state.pageStack.push(state.currentPage);
+    state.currentPage = pageId;
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    $(pageId).classList.add('active');
+    if(pageId === 'page-manage'){ loadAvailableImages(); setTimeout(renderGoodsStats, 50); }
+    // 离开首页时收起搜索结果，失去焦点
+    if(pageId !== 'page-home'){
+      hideSearchOverlay();
+      const si = $('search-input');
+      if(si){ si.value=''; si.blur(); }
+      const sc = $('search-clear');
+      if(sc) sc.style.display='none';
+    }
+  }
+  function goBack(){
+    const prev = state.pageStack.pop();
+    if(prev){
+      state.currentPage = prev;
+      document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+      $(prev).classList.add('active');
+    }
+  }
+
+  // ---------- 分类渲染 ----------
+  function renderCatList(elId, activeCatId, onCatClick){
+    const el=$(elId);
+    el.innerHTML = CATEGORIES.map(c=>`<div class="cat-item ${c.id===activeCatId?'active':''}" onclick="${onCatClick}(${c.id})">${c.icon} ${c.name}</div>`).join('');
+  }
+  // 分页状态
+  const PAGE_SIZE = 50;
+  let _pageList = [];     // 当前分类全量列表
+  let _pageOffset = 0;    // 已渲染数量
+  let _pageElId = '';     // 容器ID
+  let _pageObserver = null; // IntersectionObserver
+
+  function renderGoodsPanel(elId, catId){
+    const el=$(elId);
+    _pageList = GOODS_DATA.filter(g=>g.catId===catId);
+    _pageOffset = 0;
+    _pageElId = elId;
+
+    // 清除旧的 observer
+    if(_pageObserver){ _pageObserver.disconnect(); _pageObserver=null; }
+
+    // 初始渲染
+    el.innerHTML = '<div class="goods-grid" id="'+elId+'-grid"></div><div id="'+elId+'-sentinel" style="height:1px;"></div>';
+    _appendGoodsPage(elId);
+
+    // 用 IntersectionObserver 监听哨兵元素，滚动到底自动加载
+    const sentinel = document.getElementById(elId+'-sentinel');
+    if(sentinel && 'IntersectionObserver' in window){
+      _pageObserver = new IntersectionObserver(entries=>{
+        if(entries[0].isIntersecting) _appendGoodsPage(elId);
+      }, { rootMargin:'200px' });
+      _pageObserver.observe(sentinel);
+    }
+  }
+  function _appendGoodsPage(elId){
+    if(_pageOffset >= _pageList.length) return;
+    const grid = document.getElementById(elId+'-grid');
+    if(!grid) return;
+    const slice = _pageList.slice(_pageOffset, _pageOffset + PAGE_SIZE);
+    grid.insertAdjacentHTML('beforeend', slice.map(g=>`
+      <div class="goods-card" onclick="App.openDetail('${g.id}')">
+        ${goodsImgHtml(g,'goods-img')}
+        <div class="goods-info">
+          <div class="goods-name">${g.name}</div>
+          <div class="goods-id">编号：${g.id}</div>
+          <div class="goods-bottom">
+            <div class="goods-price">${formatPrice(g.price)}<span>/${g.unit}${g.spec ? ' · '+g.spec : ''}</span></div>
+            <button class="add-btn" onclick="event.stopPropagation();App.quickAddCart('${g.id}')">+</button>
+          </div>
+        </div>
+      </div>`).join(''));
+    _pageOffset += slice.length;
+    // 已加载完，移除哨兵
+    if(_pageOffset >= _pageList.length && _pageObserver){
+      _pageObserver.disconnect(); _pageObserver=null;
+    }
+  }
+  function switchCat(catId){
+    state.currentCat = catId;
+    renderCatList('cat-list', catId, 'App.switchCat');
+    renderGoodsPanel('goods-panel', catId);
+    // 如果在首页，滚动到分类区
+    const homeBody = $('home-body');
+    if(homeBody){
+      const catGoods = $('cat-goods-container');
+      if(catGoods) setTimeout(()=>catGoods.scrollIntoView({behavior:'smooth'}),100);
+    }
+  }
+  function switchCat2(catId){
+    state.currentCat2 = catId;
+    renderCatList('cat-list2', catId, 'App.switchCat2');
+    renderGoodsPanel('goods-panel2', catId);
+  }
+  function renderCatPanel(){
+    renderCatList('cat-list2', state.currentCat2, 'App.switchCat2');
+    renderGoodsPanel('goods-panel2', state.currentCat2);
+  }
+
+  // ---------- 商品详情 ----------
+  function openDetail(goodId){
+    const g = GOODS_DATA.find(x=>String(x.id)===String(goodId));
+    if(!g) return;
+    state.currentGood = g;
+    state.currentSpec = g.specs[0];
+    state.currentQty = 1;
+    renderDetail();
+    showPage('page-detail');
+  }
+  function renderDetail(){
+    const g = state.currentGood;
+    const body=$('detail-body');
+    body.innerHTML=`
+      ${goodsImgHtml(g,'detail-img')}
+      <div class="detail-content">
+        <div class="detail-name">${g.name}</div>
+        <div class="detail-price-row">
+          <div class="detail-price">${formatPrice(g.price)}</div>
+          <div class="detail-price-unit">/${g.unit}</div>
+          <div class="detail-stock">库存充足</div>
+        </div>
+        <div class="detail-tags">${(g.tag||[]).map(t=>`<span class="detail-tag">${t}</span>`).join('')}</div>
+      </div>
+      <div class="detail-section">
+        <div class="detail-section-title">选择规格</div>
+        <div class="spec-list" id="spec-list">${g.specs.map(s=>`<div class="spec-item ${s===state.currentSpec?'active':''}" onclick="App.selectSpec('${s}')">${s}</div>`).join('')}</div>
+        <div class="qty-row">
+          <div class="qty-label">购买数量</div>
+          <div class="qty-stepper">
+            <button class="qty-btn minus" onclick="App.changeQty(-1)">−</button>
+            <div class="qty-num" id="qty-num">${state.currentQty}</div>
+            <button class="qty-btn" onclick="App.changeQty(1)">+</button>
+          </div>
+        </div>
+      </div>
+      <div class="detail-section">
+        <div class="detail-section-title">商品属性</div>
+        <div class="detail-attrs">${Object.entries(g.attrs).map(([k,v])=>`<div class="attr-row"><div class="attr-label">${k}</div><div class="attr-value">${v}</div></div>`).join('')}</div>
+      </div>
+      <div class="detail-section">
+        <div class="detail-section-title">商品简介</div>
+        <div style="font-size:13px;color:var(--text-2);line-height:1.8;">${g.name}，${g.spec}。本商品为商家直供批发产品，量大从优，欢迎拨打电话咨询洽谈。下单后1-3个工作日内安排发货，物流配送全国。</div>
+      </div>
+      <div style="height:80px;"></div>
+    `;
+    $('detail-footer').innerHTML=`
+      <div class="detail-footer">
+        <button class="btn-cart" onclick="App.addToCart()">加入购物车</button>
+        <button class="btn-buy" onclick="App.buyNow()">立即下单</button>
+      </div>
+    `;
+  }
+  function selectSpec(spec){
+    state.currentSpec = spec;
+    document.querySelectorAll('.spec-item').forEach(el=>{
+      el.classList.toggle('active', el.textContent===spec);
+    });
+  }
+  function changeQty(delta){
+    state.currentQty = Math.max(1, state.currentQty+delta);
+    const el=$('qty-num');
+    if(el) el.textContent=state.currentQty;
+  }
+
+  // ---------- 购物车 ----------
+  function cartKey(goodId, spec){ return `${goodId}__${spec}`; }
+  function addToCart(){
+    const g=state.currentGood, spec=state.currentSpec, qty=state.currentQty;
+    const key=cartKey(g.id,spec);
+    const existing=state.cartItems.find(i=>i.key===key);
+    if(existing){ existing.qty+=qty; }
+    else { state.cartItems.push({key,goodId:g.id,spec,qty,checked:true}); }
+    save(); updateCartBadge(); showToast('已加入购物车 🛒');
+  }
+  function quickAddCart(goodId){
+    const g=GOODS_DATA.find(x=>String(x.id)===String(goodId));
+    if(!g) return;
+    const spec=g.specs[0];
+    // 从规格描述中提取最后出现的数字作为数量（如"6包/提"→6，"550ml×24"→24，"10片装"→10）
+    const numMatch=spec.match(/\d+/g);
+    const qty=numMatch ? parseInt(numMatch[numMatch.length-1],10) : 1;
+    const key=cartKey(g.id,spec);
+    const existing=state.cartItems.find(i=>i.key===key);
+    if(existing){ existing.qty+=qty; }
+    else { state.cartItems.push({key,goodId:g.id,spec,qty,checked:true}); }
+    save(); updateCartBadge(); showToast('+'+qty+' 已加入购物车');
+  }
+  function buyNow(){
+    addToCart();
+    switchTab('cart');
+  }
+  // ==================== 扫码功能 ====================
+  // 扫码记录（仅本次会话内保留，切换页面不清空）
+  var _scanLog = [];
+
+  function scanAdd(){
+    const input = $('scan-input');
+    if(!input) return;
+    const code = input.value.trim();
+    if(!code){ showToast('请输入或扫描条形码'); return; }
+
+    // 在商品库里查找
+    const g = GOODS_DATA.find(function(x){ return String(x.id).toLowerCase() === code.toLowerCase(); });
+
+    // 不管找没找到，都加入购物车
+    const goodId = g ? String(g.id) : code;
+    const name   = g ? g.name  : '未知商品';
+    const spec   = g ? (g.specs && g.specs[0] ? g.specs[0] : (g.spec||'')) : '';
+    const key    = goodId + '|' + spec;
+
+    // 加入购物车（已有则+1，没有则新增）
+    const existing = state.cartItems.find(function(i){ return i.key === key; });
+    if(existing){
+      existing.qty += 1;
+    } else {
+      state.cartItems.push({ key: key, goodId: goodId, spec: spec, qty: 1, checked: true });
+    }
+    save();
+    updateCartBadge();
+
+    // 记录到扫码日志
+    const found = !!g;
+    _scanLog.unshift({ code: goodId, name: name, spec: spec, found: found, time: new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit',second:'2-digit'}) });
+
+    // 刷新日志面板
+    renderScanLog();
+
+    // 清空输入框，准备下次扫码
+    input.value = '';
+    input.focus();
+
+    // 提示
+    if(found){
+      showToast('✅ ' + name + ' 已加入购物车');
+    } else {
+      showToast('⚠️ 编号 ' + code + ' 不在商品库，已加入购物车');
+    }
+  }
+
+  function renderScanLog(){
+    const el = $('scan-log');
+    if(!el) return;
+    if(_scanLog.length === 0){
+      el.innerHTML = '<div style="text-align:center;color:var(--text-3);font-size:13px;padding:20px 0;">暂无记录，开始扫码吧～</div>';
+      return;
+    }
+    el.innerHTML = _scanLog.map(function(item){
+      return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">'
+        + '<div style="font-size:20px;flex-shrink:0;">' + (item.found ? '✅' : '⚠️') + '</div>'
+        + '<div style="flex:1;min-width:0;">'
+        + '<div style="font-size:13px;font-weight:500;color:var(--text);">' + item.name + '</div>'
+        + '<div style="font-size:11px;color:var(--text-3);">编号：' + item.code + (item.spec ? '　规格：' + item.spec : '') + '</div>'
+        + (item.found ? '' : '<div style="font-size:11px;color:#e67e22;">商品库中未找到，已按编号录入</div>')
+        + '</div>'
+        + '<div style="font-size:11px;color:var(--text-3);flex-shrink:0;">' + item.time + '</div>'
+        + '</div>';
+    }).join('');
+  }
+
+  function scanClearLog(){
+    _scanLog = [];
+    renderScanLog();
+  }
+  // ==================== 扫码功能 END ====================
+
+  function updateCartBadge(){
+    const total=state.cartItems.reduce((s,i)=>s+i.qty,0);
+    ['cart-badge','cart-badge2','cart-badge3','cart-badge4','cart-badge5'].forEach(id=>{
+      const el=$(id); if(!el) return;
+      el.textContent=total>99?'99+':total;
+      el.style.display=total>0?'flex':'none';
+    });
+  }
+  function clearCart(){
+    if(state.cartItems.length===0){ showToast('购物车已空'); return; }
+    state.cartItems=[];
+    save(); updateCartBadge(); renderCart(); showToast('已清空购物车');
+  }
+  function renderCart(){
+    const el=$('cart-content');
+    if(state.cartItems.length===0){
+      el.innerHTML=`<div class="cart-empty"><div class="cart-empty-icon">🛒</div><div class="cart-empty-text">购物车还是空的～</div><button class="cart-empty-btn" onclick="App.switchTab('home')">去选购</button></div>`;
+      return;
+    }
+    const checkedItems=state.cartItems.filter(i=>i.checked);
+    const total=checkedItems.reduce((s,i)=>{
+      const g=GOODS_DATA.find(x=>String(x.id)===String(i.goodId));
+      return s+(g?g.price*i.qty:0);
+    },0);
+    const allChecked=state.cartItems.every(i=>i.checked);
+    el.innerHTML=`
+      <div class="cart-list">${state.cartItems.map((item,idx)=>{
+        const g=GOODS_DATA.find(x=>String(x.id)===String(item.goodId));
+        if(!g) return '';
+        return `<div class="cart-item">
+          <div class="cart-check ${item.checked?'checked':''}" onclick="App.toggleCartCheck(${idx})">${item.checked?'✓':''}</div>
+          ${goodsImgHtml(g,'cart-img')}
+          <div class="cart-info">
+            <div class="cart-name">${g.name}</div>
+            <div class="cart-spec-text">${item.spec}</div>
+            <div class="cart-row">
+              <div class="cart-price">${formatPrice(g.price*item.qty)}</div>
+              <div class="cart-stepper">
+                <button class="cart-btn minus" onclick="App.changeCartQty(${idx},-1)">−</button>
+                <div class="cart-num">${item.qty}</div>
+                <button class="cart-btn" onclick="App.changeCartQty(${idx},1)">+</button>
+              </div>
+            </div>
+          </div>
+          <div class="cart-del" onclick="App.removeCartItem(${idx})">×</div>
+        </div>`;
+      }).join('')}</div>
+      <div class="cart-footer">
+        <div class="cart-check-all" onclick="App.toggleCheckAll()">
+          <div class="cart-check-all-box ${allChecked?'checked':''}">${allChecked?'✓':''}</div>
+          <div class="cart-check-all-label">全选</div>
+        </div>
+        <div class="cart-total-area">
+          <div class="cart-total-text">合计：</div>
+          <div class="cart-total-price">${formatPrice(total)}<span>（已选${checkedItems.length}件）</span></div>
+        </div>
+        <button class="cart-submit" onclick="App.goCheckout()" ${checkedItems.length===0?'disabled':''}>去结算</button>
+      </div>
+    `;
+  }
+  function toggleCartCheck(idx){
+    state.cartItems[idx].checked=!state.cartItems[idx].checked;
+    save(); renderCart();
+  }
+  function toggleCheckAll(){
+    const allChecked=state.cartItems.every(i=>i.checked);
+    state.cartItems.forEach(i=>i.checked=!allChecked);
+    save(); renderCart();
+  }
+  function changeCartQty(idx, delta){
+    state.cartItems[idx].qty=Math.max(1,state.cartItems[idx].qty+delta);
+    save(); updateCartBadge(); renderCart();
+  }
+  function removeCartItem(idx){
+    state.cartItems.splice(idx,1);
+    save(); updateCartBadge(); renderCart();
+  }
+
+  // ---------- 结算 ----------
+  function goCheckout(){
+    const checked=state.cartItems.filter(i=>i.checked);
+    if(checked.length===0){ showToast('请先选择商品'); return; }
+    renderCheckout(checked);
+    showPage('page-checkout');
+  }
+  function renderCheckout(items){
+    const body=$('checkout-body');
+    const defaultAddr = state.addresses.find(a=>a.isDefault) || state.addresses[0];
+    const subtotal=items.reduce((s,i)=>{
+      const g=GOODS_DATA.find(x=>String(x.id)===String(i.goodId));
+      return s+(g?g.price*i.qty:0);
+    },0);
+    const freight = subtotal>=200?0:10;
+    const total=subtotal+freight;
+    body.innerHTML=`
+      <div class="checkout-section" style="margin:8px;border-radius:12px;overflow:hidden;">
+        <div class="checkout-section-header"><span class="icon">📍</span><span class="label">收货地址</span></div>
+        ${defaultAddr?`<div class="address-card" onclick="App.showPage('page-address')">
+          <div class="address-name-row"><span class="address-name">${defaultAddr.name}</span><span class="address-phone">${defaultAddr.phone}</span></div>
+          <div class="address-detail">${defaultAddr.region} ${defaultAddr.detail}</div>
+        </div>`:`<div class="no-address" onclick="App.showAddAddress()"><span class="no-address-text">+ 添加收货地址</span><span>›</span></div>`}
+      </div>
+      <div class="checkout-section" style="margin:8px;border-radius:12px;overflow:hidden;">
+        <div class="checkout-section-header"><span class="icon">📦</span><span class="label">商品清单（${items.length}件）</span></div>
+        <div class="checkout-goods">${items.map(item=>{
+          const g=GOODS_DATA.find(x=>String(x.id)===String(item.goodId));
+          if(!g) return '';
+          return `<div class="checkout-goods-item">
+            ${goodsImgHtml(g,'checkout-goods-img')}
+            <div class="checkout-goods-info">
+              <div class="checkout-goods-name">${g.name}</div>
+              <div class="checkout-goods-spec">${item.spec}</div>
+            </div>
+            <div class="checkout-goods-right">
+              <div class="checkout-goods-price">${formatPrice(g.price*item.qty)}</div>
+              <div class="checkout-goods-qty">×${item.qty}</div>
+            </div>
+          </div>`;
+        }).join('')}</div>
+      </div>
+      <div class="checkout-section" style="margin:8px;border-radius:12px;overflow:hidden;">
+        <div class="checkout-section-header"><span class="icon">📝</span><span class="label">备注</span></div>
+        <div class="checkout-remark"><textarea id="order-remark" rows="3" placeholder="如有特殊要求，请在此备注…"></textarea></div>
+      </div>
+      <div class="checkout-section" style="margin:8px;border-radius:12px;overflow:hidden;">
+        <div class="checkout-section-header"><span class="icon">💰</span><span class="label">费用明细</span></div>
+        <div class="checkout-summary">
+          <div class="summary-row"><span class="summary-label">商品合计</span><span class="summary-value">${formatPrice(subtotal)}</span></div>
+          <div class="summary-row"><span class="summary-label">运费</span><span class="summary-value">${freight===0?'<span style="color:var(--green)">免运费</span>':formatPrice(freight)}</span></div>
+          ${freight>0?`<div class="summary-row"><span class="summary-label" style="font-size:12px;color:var(--text-3)">满200元包邮</span><span></span></div>`:''}
+          <div class="summary-row summary-total"><span class="summary-label">应付总额</span><span class="summary-value">${formatPrice(total)}</span></div>
+        </div>
+      </div>
+      <div style="height:80px;"></div>
+    `;
+    $('checkout-footer').innerHTML=`
+      <div class="checkout-footer">
+        <div class="checkout-total-display">合计：<strong>${formatPrice(total)}</strong></div>
+        <button class="checkout-pay-btn" onclick="App.submitOrder()">提交订单</button>
+      </div>
+    `;
+    $('checkout-footer').dataset.total=total;
+    $('checkout-footer').dataset.items=JSON.stringify(items);
+  }
+  function submitOrder(){
+    const defaultAddr=state.addresses.find(a=>a.isDefault)||state.addresses[0];
+    if(!defaultAddr){ showToast('请先添加收货地址'); return; }
+    const footer=$('checkout-footer');
+    const total=parseFloat(footer.dataset.total);
+    const items=JSON.parse(footer.dataset.items||'[]');
+    const remark=($('order-remark')||{}).value||'';
+    const orderNo=genOrderNo();
+    const orderTime=new Date().toLocaleString('zh-CN');
+    const order={
+      no:orderNo,
+      time:orderTime,
+      status:'pending',
+      address:defaultAddr,
+      remark,
+      total,
+      items:items.map(i=>{
+        const g=GOODS_DATA.find(x=>String(x.id)===String(i.goodId));
+        return { goodId:i.goodId, name:g?g.name:'', emoji:g?g.emoji:'📦', spec:i.spec, qty:i.qty, price:g?g.price:0 };
+      })
+    };
+    state.orders.unshift(order);
+    // 从购物车移除已下单商品
+    const checkedKeys=items.map(i=>i.key);
+    state.cartItems=state.cartItems.filter(i=>!checkedKeys.includes(i.key));
+    save(); updateCartBadge();
+    state.pageStack=[];
+    showPage('page-success', false);
+    showToast('订单提交成功！');
+
+    // ── 发送订单通知邮件 ──
+    sendOrderEmail(order);
+
+
+    // ── 同步订单到 Google Sheets ──
+    sendOrderToSheet(order);
+  }
+
+  // ---------- 订单 ----------
+  function renderOrders(){
+    const body=$('order-body');
+    const tabs=['all','pending','processing','done'];
+    const statusMap={pending:'待确认',processing:'备货中',done:'已完成',cancelled:'已取消'};
+    const statusClass={pending:'pending',processing:'processing',done:'done',cancelled:'cancelled'};
+    let list=state.orders;
+    if(state.orderTabIdx===1) list=state.orders.filter(o=>o.status==='pending');
+    else if(state.orderTabIdx===2) list=state.orders.filter(o=>o.status==='processing');
+    else if(state.orderTabIdx===3) list=state.orders.filter(o=>o.status==='done');
+    if(list.length===0){
+      body.innerHTML=`<div class="order-empty"><div class="order-empty-icon">📋</div><div class="order-empty-text">暂无订单记录</div></div>`;
+      return;
+    }
+    body.innerHTML=list.map(o=>`
+      <div class="order-card">
+        <div class="order-card-header">
+          <span class="order-no">订单号：${o.no}</span>
+          <span class="order-status ${statusClass[o.status]}">${statusMap[o.status]}</span>
+        </div>
+        <div class="order-goods-list">${o.items.map(item=>{
+          const og = GOODS_DATA.find(x=>String(x.id)===String(item.goodId)) || {id:item.goodId, emoji:item.emoji||'📦', imageUrl:''};
+          return `<div class="order-goods-row">
+            ${goodsImgHtml(og,'order-goods-img')}
+            <div class="order-goods-detail">
+              <div class="order-goods-name">${item.name}</div>
+              <div class="order-goods-spec">${item.spec}</div>
+              <div class="order-goods-price-row">${formatPrice(item.price)} × ${item.qty}</div>
+            </div>
+          </div>`;}).join('')}</div>
+        <div class="order-card-body">
+          ${o.address?`<div class="order-addr">📍 ${o.address.name} ${o.address.phone} · ${o.address.region} ${o.address.detail}</div>`:''}
+          ${o.remark?`<div style="font-size:12px;color:var(--text-3);margin-top:6px;">备注：${o.remark}</div>`:''}
+          <div style="font-size:12px;color:var(--text-3);margin-top:6px;">下单时间：${o.time}</div>
+        </div>
+        <div class="order-card-footer">
+          <span class="order-total-text">实付：<strong>${formatPrice(o.total)}</strong></span>
+          <div class="order-action-btns">
+            ${o.status==='pending'?`<button class="order-btn" onclick="App.cancelOrder('${o.no}')">取消订单</button>`:''}
+            ${o.status==='done'?`<button class="order-btn primary" onclick="App.reorder('${o.no}')">再次下单</button>`:''}
+            ${o.status==='processing'?`<button class="order-btn primary" onclick="App.showToast('物流信息查询功能开发中…')">查看物流</button>`:''}
+            <button class="order-btn" style="color:var(--primary);border-color:var(--primary);" onclick="App.exportOrderExcel('${o.no}')">📥 导出Excel</button>
+          </div>
+        </div>
+      </div>`).join('');
+  }
+  function switchOrderTab(idx){
+    state.orderTabIdx=idx;
+    document.querySelectorAll('.order-tab').forEach((el,i)=>el.classList.toggle('active',i===idx));
+    renderOrders();
+  }
+  function exportOrderExcel(no){
+    const o = state.orders.find(x=>x.no===no);
+    if(!o){ showToast('找不到该订单'); return; }
+    if(typeof XLSX === 'undefined'){ showToast('⚠️ Excel库未加载，请检查网络'); return; }
+
+    // 订单基本信息
+    const addr = o.address || {};
+    const infoRows = [
+      ['订单编号', o.no],
+      ['下单时间', o.time],
+      ['订单状态', {pending:'待确认',processing:'备货中',done:'已完成',cancelled:'已取消'}[o.status]||o.status],
+      ['客户姓名', addr.name||'—'],
+      ['联系电话', addr.phone||'—'],
+      ['收货地址', (addr.province||'')+(addr.city||'')+(addr.district||'')+(addr.detail||'')],
+      ['备注',     o.remark||'无'],
+      [''],  // 空行分隔
+      ['商品编号','商品名称','规格','单价','数量','小计'],
+    ];
+
+    // 商品明细
+    const goodsRows = o.items.map(i=>[
+      String(i.goodId),
+      i.name,
+      i.spec,
+      i.price,
+      i.qty,
+      parseFloat((i.price * i.qty).toFixed(2))
+    ]);
+
+    // 合计行
+    const totalRow = ['','','','合计','', parseFloat(o.total.toFixed(2))];
+
+    const wsData = [...infoRows, ...goodsRows, [''], totalRow];
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+    // 列宽
+    ws['!cols'] = [{wch:16},{wch:30},{wch:20},{wch:10},{wch:8},{wch:12}];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, '订货单');
+    XLSX.writeFile(wb, '订货单_' + no + '.xlsx');
+    showToast('📥 已导出：订货单_' + no + '.xlsx');
+  }
+  function cancelOrder(no){
+    const o=state.orders.find(x=>x.no===no);
+    if(o){ o.status='cancelled'; save(); renderOrders(); showToast('订单已取消'); }
+  }
+  function reorder(no){
+    const o=state.orders.find(x=>x.no===no);
+    if(!o) return;
+    o.items.forEach(item=>{
+      const key=cartKey(item.goodId,item.spec);
+      const existing=state.cartItems.find(i=>i.key===key);
+      if(existing){ existing.qty+=item.qty; }
+      else { state.cartItems.push({key,goodId:item.goodId,spec:item.spec,qty:item.qty,checked:true}); }
+    });
+    save(); updateCartBadge(); switchTab('cart'); showToast('已加入购物车');
+  }
+
+  // ---------- 个人中心 ----------
+  function renderProfile(){
+    $('profile-name').textContent = state.profile.name||'未设置姓名';
+    $('profile-phone').textContent = state.profile.phone||'未绑定手机';
+    $('stat-total').textContent = state.orders.length;
+    $('stat-pending').textContent = state.orders.filter(o=>o.status==='pending').length;
+    $('stat-processing').textContent = state.orders.filter(o=>o.status==='processing').length;
+    $('stat-done').textContent = state.orders.filter(o=>o.status==='done').length;
+  }
+  function showEditProfile(){
+    $('edit-name').value = state.profile.name||'';
+    $('edit-phone').value = state.profile.phone||'';
+    $('modal-profile').classList.add('show');
+  }
+  function saveProfile(){
+    state.profile.name=$('edit-name').value.trim();
+    state.profile.phone=$('edit-phone').value.trim();
+    if(!state.profile.name){ showToast('请输入姓名'); return; }
+    save(); closeModal('modal-profile'); renderProfile(); showToast('保存成功');
+  }
+  function clearAllData(){
+    if(!confirm('⚠️ 确认清除所有数据？\n\n将清除：购物车、订单记录、收货地址、个人信息\n\n此操作不可恢复！')) return;
+    localStorage.removeItem('sc_cart');
+    localStorage.removeItem('sc_orders');
+    localStorage.removeItem('sc_addresses');
+    localStorage.removeItem('sc_profile');
+    localStorage.removeItem('sc_goods');
+    state.cartItems=[];
+    state.orders=[];
+    state.addresses=[];
+    state.profile={name:'',phone:''};
+    renderProfile();
+    showToast('✅ 所有数据已清除，请重新登录');
+    setTimeout(()=>{ location.reload(); }, 1500);
+  }
+
+  // ---------- 地址 ----------
+  function renderAddress(){
+    const body=$('address-body');
+    body.innerHTML=state.addresses.map((a,idx)=>`
+      <div class="addr-card">
+        <div class="addr-top">
+          <div class="addr-name-phone">
+            <span class="addr-name">${a.name}</span>
+            <span class="addr-phone">${a.phone}</span>
+            ${a.isDefault?`<span class="addr-default-tag">默认</span>`:''}
+          </div>
+          ${!a.isDefault?`<span style="font-size:12px;color:var(--text-3);cursor:pointer;" onclick="App.setDefaultAddr(${idx})">设为默认</span>`:''}
+        </div>
+        <div class="addr-detail-text">${a.region} ${a.detail}</div>
+        <div class="addr-actions">
+          <div class="addr-action-btn" onclick="App.editAddress(${idx})">✏️ 编辑</div>
+          <div class="addr-action-btn del" onclick="App.deleteAddress(${idx})">🗑️ 删除</div>
+        </div>
+      </div>`).join('')+`<div class="add-addr-btn" onclick="App.showAddAddress()">+ 新增收货地址</div>`;
+  }
+  function showAddAddress(){
+    state.editAddrIdx=-1;
+    $('addr-name').value=''; $('addr-phone').value=''; $('addr-region').value=''; $('addr-detail').value='';
+    const modal=$('modal-address');
+    modal.querySelector('.modal-title').childNodes[0].textContent='新增地址 ';
+    modal.classList.add('show');
+    showPage('page-address');
+    renderAddress();
+  }
+  function editAddress(idx){
+    state.editAddrIdx=idx;
+    const a=state.addresses[idx];
+    $('addr-name').value=a.name; $('addr-phone').value=a.phone; $('addr-region').value=a.region; $('addr-detail').value=a.detail;
+    $('modal-address').querySelector('.modal-title').childNodes[0].textContent='编辑地址 ';
+    $('modal-address').classList.add('show');
+  }
+  function saveAddress(){
+    const name=$('addr-name').value.trim();
+    const phone=$('addr-phone').value.trim();
+    const region=$('addr-region').value.trim();
+    const detail=$('addr-detail').value.trim();
+    if(!name||!phone||!region||!detail){ showToast('请填写完整信息'); return; }
+    const addr={name,phone,region,detail,isDefault:state.addresses.length===0};
+    if(state.editAddrIdx>=0){ state.addresses[state.editAddrIdx]=addr; addr.isDefault=state.addresses[state.editAddrIdx].isDefault; }
+    else { state.addresses.push(addr); }
+    save(); closeModal('modal-address'); renderAddress(); showToast('地址保存成功');
+  }
+  function deleteAddress(idx){
+    state.addresses.splice(idx,1);
+    if(state.addresses.length>0&&!state.addresses.some(a=>a.isDefault)) state.addresses[0].isDefault=true;
+    save(); renderAddress(); showToast('已删除');
+  }
+  function setDefaultAddr(idx){
+    state.addresses.forEach((a,i)=>a.isDefault=i===idx);
+    save(); renderAddress(); showToast('已设为默认地址');
+  }
+
+  // ---------- 弹窗 ----------
+  function closeModal(id, e){
+    if(e&&e.target.id!==id) return;
+    $(id).classList.remove('show');
+  }
+
+  // ---------- 初始化 ----------
+  function init(){
+    load();
+    // 加载用户之前导入的商品数据（如有）
+    try {
+      const savedGoods = localStorage.getItem('sc_goods');
+      if(savedGoods){
+        const parsed = JSON.parse(savedGoods);
+        if(Array.isArray(parsed) && parsed.length > 0){
+          GOODS_DATA.length = 0;
+          parsed.forEach(g => {
+            // 兼容旧数据：没有imageUrl时自动补上本地图片路径
+            if(!g.imageUrl && g.id) g.imageUrl = `images/${g.id}.jpg`;
+            GOODS_DATA.push(g);
+          });
+        }
+      }
+    } catch(e){}
+    // 预加载本地图片列表（用于导入时自动匹配）
+    loadAvailableImages();
+    // 渲染首页分类+商品
+    renderCatList('cat-list', state.currentCat, 'App.switchCat');
+    renderGoodsPanel('goods-panel', state.currentCat);
+    updateCartBadge();
+  }
+
+  // ---------- 商品管理：统计 ----------
+  function renderGoodsStats(){
+    const el=$('goods-stats');
+    if(!el) return;
+    const total=GOODS_DATA.length;
+    const byCat=CATEGORIES.map(c=>({name:c.name,count:GOODS_DATA.filter(g=>g.catId===c.id).length}));
+    // 统计已有图片的商品数
+    const withImg = GOODS_DATA.filter(g=>g.imageUrl||hasLocalImg(g.id)).length;
+    const imgLibSize = _availableImgIds ? _availableImgIds.size : '加载中…';
+    el.innerHTML=`
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+        <div style="background:var(--primary-light);border-radius:10px;padding:12px;text-align:center;">
+          <div style="font-size:22px;font-weight:700;color:var(--primary);">${total}</div>
+          <div style="font-size:12px;color:var(--text-2);margin-top:3px;">商品总数</div>
+        </div>
+        <div style="background:#f0f6ff;border-radius:10px;padding:12px;text-align:center;">
+          <div style="font-size:22px;font-weight:700;color:#3478f6;">${CATEGORIES.length}</div>
+          <div style="font-size:12px;color:var(--text-2);margin-top:3px;">商品分类</div>
+        </div>
+        <div style="background:#f0fff4;border-radius:10px;padding:12px;text-align:center;">
+          <div style="font-size:22px;font-weight:700;color:#27ae60;">${withImg}</div>
+          <div style="font-size:12px;color:var(--text-2);margin-top:3px;">已有图片</div>
+        </div>
+        <div style="background:#fffbf0;border-radius:10px;padding:12px;text-align:center;">
+          <div style="font-size:18px;font-weight:700;color:#e67e22;">${imgLibSize}</div>
+          <div style="font-size:12px;color:var(--text-2);margin-top:3px;">图片库总数</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        ${byCat.map(c=>`
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="font-size:13px;color:var(--text-2);width:70px;flex-shrink:0;">${c.name}</div>
+            <div style="flex:1;height:8px;background:#f0f0f0;border-radius:4px;overflow:hidden;">
+              <div style="height:100%;background:var(--primary);border-radius:4px;width:${total>0?Math.round(c.count/total*100):0}%;"></div>
+            </div>
+            <div style="font-size:13px;font-weight:600;color:var(--text);width:28px;text-align:right;">${c.count}</div>
+          </div>`).join('')}
+      </div>`;
+  }
+
+  // ---------- 商品管理：文件处理 ----------
+  let _pendingImportData = null;
+  // 从服务器加载可用图片ID集合（用于Excel导入时自动匹配）
+  let _availableImgIds = null; // Set<string> 或 null(未加载)
+  function loadAvailableImages(){
+    if(_availableImgIds !== null) return;
+    fetch('/api/images').then(r=>r.json()).then(data=>{
+      _availableImgIds = new Set(data.files.map(f=>String(f.id)));
+    }).catch(()=>{ _availableImgIds = new Set(); });
+  }
+  // 判断某商品id是否有本地图片
+  function hasLocalImg(id){
+    if(!_availableImgIds) return false;
+    return _availableImgIds.has(String(id));
+  }
+
+
+  function handleFileDrop(event){
+    event.preventDefault();
+    $('drop-zone').style.background='';
+    const file = event.dataTransfer.files[0];
+    if(file) parseExcelFile(file);
+  }
+  function handleFileSelect(input){
+    const file = input.files[0];
+    if(file) parseExcelFile(file);
+    input.value='';
+  }
+
+  function parseExcelFile(file){
+    if(!file.name.match(/\.(xlsx|xls)$/i)){
+      showToast('请上传 .xlsx 或 .xls 格式文件');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = function(e){
+      try {
+        const data = new Uint8Array(e.target.result);
+        // 使用内置 SheetJS（需要加载）
+        if(typeof XLSX === 'undefined'){
+          showToast('正在加载解析库…');
+          return;
+        }
+        const wb = XLSX.read(data, {type:'array', cellText:true, cellDates:true});
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        // raw:false 使用格式化文本值（保留EAN大数精度），defval:''避免undefined
+        const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:'', raw:false});
+        processExcelRows(rows);
+      } catch(err){
+        showToast('文件解析失败，请检查格式');
+        console.error(err);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  function processExcelRows(rows){
+    // 跳过第1行(表头)和第2行(说明)，从第3行开始
+    const dataRows = rows.slice(2).filter(r => r[0] !== undefined && r[0] !== null && String(r[0]).trim() !== '');
+    if(dataRows.length === 0){
+      showToast('未找到有效商品数据（从第3行开始填写）');
+      return;
+    }
+    const goods = [];
+    const errors = [];
+    dataRows.forEach((row, idx) => {
+      const rowNum = idx + 3;
+      // 商品编号保留为字符串！EAN码是13位大数，parseInt/Number会丢失精度
+      // SheetJS读数字时可能返回浮点数如 8001480719408.0，需去掉小数部分
+      const rawId = row[0];
+      const id = String(rawId).trim().replace(/\.0+$/, '');
+      const catId = parseInt(row[1]);
+      const name = String(row[2]||'').trim();
+      const spec = String(row[3]||'').trim();
+      const price = parseFloat(row[4]);
+      const unit = String(row[5]||'').trim();
+      const stock = parseInt(row[6]) || 999;
+      const tagsRaw = String(row[7]||'').trim();
+      const emoji = String(row[8]||'').trim() || '📦';
+      const specsRaw = String(row[9]||'').trim();
+      const attrsRaw = String(row[10]||'').trim();
+      const imageUrl = String(row[11]||'').trim().replace(/^\/images\//,'images/');
+
+      if(!id || id === 'undefined') { errors.push(`第${rowNum}行：商品编号无效`); return; }
+      if(isNaN(catId) || catId < 0 || catId > 5) { errors.push(`第${rowNum}行：分类ID无效（需0~5）`); return; }
+      if(!name) { errors.push(`第${rowNum}行：商品名称为空`); return; }
+      if(!spec) { errors.push(`第${rowNum}行：规格描述为空`); return; }
+      if(isNaN(price) || price <= 0) { errors.push(`第${rowNum}行：单价无效`); return; }
+      if(!unit) { errors.push(`第${rowNum}行：计量单位为空`); return; }
+
+      const tags = tagsRaw ? tagsRaw.split(/[,，]/).map(s=>s.trim()).filter(Boolean) : [];
+      const specs = specsRaw ? specsRaw.split(/[,，]/).map(s=>s.trim()).filter(Boolean) : [spec];
+      const attrs = {};
+      if(attrsRaw){
+        attrsRaw.split(/[,，]/).forEach(pair=>{
+          const [k,v] = pair.split(/[:：]/);
+          if(k && v) attrs[k.trim()] = v.trim();
+        });
+      }
+      // 图片URL：直接使用本地服务器路径，交给 img onerror 兜底（不依赖预加载缓存）
+      const finalImgUrl = imageUrl || `images/${id}.jpg`;
+      goods.push({id,catId,emoji,name,spec,price,unit,stock,tag:tags,attrs,specs,imageUrl:finalImgUrl});
+    });
+
+    const preview = $('import-preview');
+    const confirmBtn = $('import-confirm-btn');
+
+    if(errors.length > 0 && goods.length === 0){
+      preview.style.display='block';
+      preview.innerHTML=`<div style="background:#fff0f0;border-radius:10px;padding:12px;font-size:13px;color:#e53e3e;">
+        <b>❌ 解析失败，发现 ${errors.length} 个错误：</b><br>
+        ${errors.slice(0,5).join('<br>')}${errors.length>5?`<br>…还有 ${errors.length-5} 个错误`:''}
+      </div>`;
+      confirmBtn.style.display='none';
+      _pendingImportData = null;
+      return;
+    }
+
+    _pendingImportData = goods;
+    const catCount = {};
+    goods.forEach(g=>{ catCount[g.catId]=(catCount[g.catId]||0)+1; });
+    const catSummary = Object.entries(catCount).map(([cid,cnt])=>{
+      const cat = CATEGORIES.find(c=>c.id===parseInt(cid));
+      return `${cat?cat.name:'未知分类'} ${cnt}件`;
+    }).join('、');
+
+    preview.style.display='block';
+    preview.innerHTML=`
+      <div style="background:#f0fff4;border-radius:10px;padding:12px;font-size:13px;color:#276749;">
+        <b>✅ 解析成功，共 ${goods.length} 件商品</b><br>
+        ${catSummary}
+        ${errors.length>0?`<br><span style="color:#E04100;">⚠️ 跳过 ${errors.length} 行（数据不完整）</span>`:''}
+      </div>
+      <div style="margin-top:10px;max-height:180px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;">
+        <table style="width:100%;border-collapse:collapse;font-size:12px;">
+          <thead style="background:#f5f5f5;position:sticky;top:0;">
+            <tr>
+              <th style="padding:6px 8px;text-align:left;border-bottom:1px solid var(--border);">商品名</th>
+              <th style="padding:6px 8px;text-align:center;border-bottom:1px solid var(--border);">分类</th>
+              <th style="padding:6px 8px;text-align:right;border-bottom:1px solid var(--border);">单价</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${goods.slice(0,20).map(g=>{
+              const cat=CATEGORIES.find(c=>c.id===g.catId);
+              return `<tr style="border-bottom:1px solid var(--border);">
+                <td style="padding:6px 8px;">${g.emoji} ${g.name}</td>
+                <td style="padding:6px 8px;text-align:center;color:var(--text-2);">${cat?cat.name:'-'}</td>
+                <td style="padding:6px 8px;text-align:right;color:var(--primary);font-weight:600;">¥${g.price.toFixed(2)}</td>
+              </tr>`;
+            }).join('')}
+            ${goods.length>20?`<tr><td colspan="3" style="padding:6px 8px;text-align:center;color:var(--text-3);">…还有 ${goods.length-20} 件</td></tr>`:''}
+          </tbody>
+        </table>
+      </div>`;
+    confirmBtn.style.display='block';
+  }
+
+  function confirmImport(){
+    if(!_pendingImportData || _pendingImportData.length === 0){ showToast('没有可导入的数据'); return; }
+    // 覆盖全局 GOODS_DATA
+    GOODS_DATA.length = 0;
+    _pendingImportData.forEach(g => GOODS_DATA.push(g));
+    // 保存到 localStorage
+    localStorage.setItem('sc_goods', JSON.stringify(GOODS_DATA));
+    _pendingImportData = null;
+    $('import-preview').style.display='none';
+    $('import-confirm-btn').style.display='none';
+    renderGoodsStats();
+    // 刷新商品面板
+    renderCatList('cat-list', state.currentCat, 'App.switchCat');
+    renderGoodsPanel('goods-panel', state.currentCat);
+    renderCatList('cat-list2', state.currentCat2, 'App.switchCat2');
+    renderGoodsPanel('goods-panel2', state.currentCat2);
+    showToast(`已成功导入 ${GOODS_DATA.length} 件商品！`);
+  }
+
+  // ---------- 导出商品数据为CSV ----------
+  function exportGoods(){
+    if(GOODS_DATA.length === 0){ showToast('暂无商品数据'); return; }
+    const header = ['商品编号','所属分类ID','商品名称','规格描述','单价','计量单位','库存数量','商品标签','商品图标','规格选项','属性键值对','商品图片URL'];
+    const rows = GOODS_DATA.map(g => [
+      g.id, g.catId, g.name, g.spec, g.price, g.unit, g.stock||'',
+      (g.tag||[]).join(','), g.emoji||'',
+      (g.specs||[]).join(','),
+      Object.entries(g.attrs||{}).map(([k,v])=>`${k}:${v}`).join(','),
+      g.imageUrl||''
+    ]);
+    const csv = [header, ...rows].map(r=>r.map(v=>
+      typeof v === 'string' && (v.includes(',') || v.includes('"') || v.includes('\n'))
+        ? `"${v.replace(/"/g,'""')}"` : v
+    ).join(',')).join('\n');
+    const bom = '\uFEFF';
+    const blob = new Blob([bom+csv], {type:'text/csv;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = '商品数据_'+new Date().toLocaleDateString('zh-CN').replace(/\//g,'-')+'.csv';
+    a.click(); URL.revokeObjectURL(url);
+    showToast('导出成功，可用Excel打开CSV文件');
+  }
+
+  return {
+    switchTab,showPage,goBack,
+    switchCat,switchCat2,
+    openDetail,selectSpec,changeQty,
+    onSearchInput,onSearchFocus,clearSearch,
+    toggleCatSearch,onCatSearchInput,clearCatSearch,
+    scanAdd,scanClearLog,
+    addToCart,quickAddCart,buyNow,
+    clearCart,renderCart,toggleCartCheck,toggleCheckAll,changeCartQty,removeCartItem,
+    goCheckout,submitOrder,
+    renderOrders,switchOrderTab,cancelOrder,reorder,exportOrderExcel,
+    renderProfile,showEditProfile,saveProfile,clearAllData,
+    showAddAddress,editAddress,saveAddress,deleteAddress,setDefaultAddr,renderAddress,
+    closeModal,showToast,
+    renderGoodsStats,handleFileDrop,handleFileSelect,confirmImport,exportGoods,
+    init,
+  };
+})();
+
+// 启动
+App.init();
+</script>
+<!-- SheetJS 用于Excel解析 -->
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" 
+  onerror="document.getElementById('drop-zone')&&(document.getElementById('drop-zone').innerHTML='<div style=\'color:#e53e3e;font-size:13px;\'>⚠️ Excel解析库加载失败，请检查网络连接</div>')">
+</script>
+<!-- EmailJS 用于订单通知邮件 -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script>
+  // ===== EmailJS 配置 =====
+  var EMAILJS_PUBLIC_KEY  = 'eUVoSNmMG1s6PLsX1';
+  var EMAILJS_SERVICE_ID  = 'service_26rqfkn';
+  var EMAILJS_TEMPLATE_ID = 'template_21by9wg';
+
+  if(EMAILJS_PUBLIC_KEY !== 'YOUR_PUBLIC_KEY'){
+    emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+  }
+
+  // ===== Google Sheets 订单同步配置 =====
+  var GSHEET_URL = 'https://script.google.com/macros/s/AKfycbyjmOZcqSZZSm3rUdlsUraejAs5JwnwcEujSeRtWdEQt07-LXgTTh6_Nsk4jpRMzmgdOw/exec';
+
+  // 上传订单到 Google Sheets（每个商品单独一行，分列写入）
+  // 用 GET + URL参数方式，彻底绕开 no-cors 的 Content-Type 限制
+  function sendOrderToSheet(order){
+    if(!GSHEET_URL) return;
+    var addr = order.address || {};
+    var addrText = (addr.province||'') + (addr.city||'') + (addr.district||'') + (addr.detail||'');
+
+    // 构造结构化商品明细数组（强制转数字，防止price是字符串导致toFixed报错）
+    var itemRows = (order.items || []).map(function(i){
+      var price  = parseFloat(i.price)  || 0;
+      var qty    = parseInt(i.qty)      || 0;
+      var amount = parseFloat((price * qty).toFixed(2));
+      return {
+        item_no:     String(i.goodId || ''),
+        item_name:   String(i.name   || ''),
+        item_spec:   String(i.spec   || ''),
+        item_qty:    qty,
+        item_price:  parseFloat(price.toFixed(2)),
+        item_amount: amount
+      };
+    });
+
+    console.log('[GSheet] order.items:', JSON.stringify(order.items));
+    console.log('[GSheet] itemRows:', JSON.stringify(itemRows));
+
+    var payload = {
+      order_no:    order.no    || '',
+      order_time:  order.time  || '',
+      buyer_name:  addr.name   || '',
+      buyer_phone: addr.phone  || '',
+      address:     addrText,
+      remark:      order.remark || '',
+      total:       parseFloat((order.total || 0).toFixed(2)),
+      items:       itemRows
+    };
+
+    console.log('[GSheet] payload items count:', itemRows.length);
+
+    // 用 GET 请求把 JSON 放在 data 参数里，Apps Script 用 e.parameter.data 读取
+    var url = GSHEET_URL + '?data=' + encodeURIComponent(JSON.stringify(payload));
+    fetch(url, { method: 'GET', mode: 'no-cors' })
+      .then(function(){ console.log('[GSheet] 同步成功'); })
+      .catch(function(err){ console.warn('[GSheet] 同步失败:', err); });
+  }
+
+  // 发送订单通知邮件
+  function sendOrderEmail(order){
+    if(EMAILJS_PUBLIC_KEY === 'YOUR_PUBLIC_KEY') return; // 未配置则跳过
+
+    // 生成商品明细 HTML 表格
+    var itemRows = order.items.map(function(i, idx){
+      return '<tr style="border-bottom:1px solid #eee;">'
+        + '<td style="padding:6px 8px;color:#666;">' + (idx+1) + '</td>'
+        + '<td style="padding:6px 8px;font-weight:500;">' + i.name + '</td>'
+        + '<td style="padding:6px 8px;color:#666;">' + i.spec + '</td>'
+        + '<td style="padding:6px 8px;text-align:center;">' + i.qty + '</td>'
+        + '<td style="padding:6px 8px;text-align:right;color:#e05c1a;">¥' + (i.price * i.qty).toFixed(2) + '</td>'
+        + '</tr>';
+    }).join('');
+
+    var itemsHtml = '<table style="width:100%;border-collapse:collapse;font-size:13px;">'
+      + '<thead><tr style="background:#f5f5f5;">'
+      + '<th style="padding:6px 8px;text-align:left;">#</th>'
+      + '<th style="padding:6px 8px;text-align:left;">商品名称</th>'
+      + '<th style="padding:6px 8px;text-align:left;">规格</th>'
+      + '<th style="padding:6px 8px;text-align:center;">数量</th>'
+      + '<th style="padding:6px 8px;text-align:right;">小计</th>'
+      + '</tr></thead>'
+      + '<tbody>' + itemRows + '</tbody>'
+      + '</table>';
+
+    var addr = order.address;
+    var addrText = (addr.name||'') + ' ' + (addr.phone||'') + '<br>'
+      + (addr.province||'') + (addr.city||'') + (addr.district||'') + (addr.detail||'');
+
+    var templateParams = {
+      order_no:    order.no,
+      order_time:  order.time,
+      buyer_name:  addr.name  || '—',
+      buyer_phone: addr.phone || '—',
+      address:     addrText,
+      items_text:  itemsHtml,
+      item_count:  order.items.length,
+      total:       '¥' + order.total.toFixed(2),
+      remark:      order.remark || '无'
+    };
+
+    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams)
+      .then(function(){ console.log('订单邮件发送成功'); })
+      .catch(function(err){ console.warn('订单邮件发送失败:', err); });
+  }
+</script>
+</body>
+</html>
