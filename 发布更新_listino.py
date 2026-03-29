@@ -75,10 +75,6 @@ except Exception as e:
 
 print(f'✅ 读取商品数据：共 {len(goods)} 件商品')
 
-# ===== 按商品名称字母顺序排序 =====
-goods.sort(key=lambda g: g['name'].strip().upper())
-print(f'✅ 已按名称字母排序（A→Z）')
-
 # ===== 第三步：写入 listino.html =====
 lines = ['const GOODS_DATA = [']
 for i, g in enumerate(goods):
