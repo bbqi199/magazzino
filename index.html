@@ -6843,7 +6843,7 @@ const App = (function(){
       + '<div style="display:flex;flex-direction:column;gap:0;">';
 
     showResults.forEach(function(g){
-      const imgUrl = g.imageUrl || ('images/' + g.id + '.jpg');
+      const imgUrl = g.imageUrl || '';  // 不再回退到本地图片
       const emoji = g.emoji || '📦';
       html += '<div onclick="App.openDetail(\'' + g.id + '\')"'
         + ' style="display:flex;align-items:center;gap:10px;background:var(--white);padding:9px 14px;border-bottom:1px solid var(--border);cursor:pointer;">'
@@ -6917,7 +6917,7 @@ const App = (function(){
       + (hasMore2 ? '，显示前 <b style="color:var(--primary);">' + SHOW_MAX2 + '</b> 条，请输入更精确关键词' : '')
       + '</div><div style="display:flex;flex-direction:column;gap:0;">';
     showResults2.forEach(function(g){
-      const imgUrl2 = g.imageUrl || ('images/' + g.id + '.jpg');
+      const imgUrl2 = g.imageUrl || '';  // 不再回退到本地图片
       const emoji2 = g.emoji || '📦';
       html2 += '<div onclick="App.openDetail(\'' + g.id + '\')"'
         + ' style="display:flex;align-items:center;gap:10px;background:var(--white);padding:9px 14px;border-bottom:1px solid var(--border);cursor:pointer;">'
@@ -6953,16 +6953,13 @@ const App = (function(){
 
 
 
-  // ---------- 图片辅助：根据商品编号自动匹配本地图片 ----------
-  // 图片服务器路径：/images/商品编号.jpg
-  // 若未找到则显示emoji兜底
+  // ---------- 图片辅助：只使用Cloudinary图片，不回退本地 ----------
   const _imgCache = {}; // id → url | null (null=无图)
 
   function getImgUrl(g){
-    // 优先用商品自带的 imageUrl 字段
+    // 只使用商品自带的 imageUrl 字段，不回退到本地图片
     if(g.imageUrl && g.imageUrl.trim()) return g.imageUrl.trim();
-    // 否则尝试以商品id为文件名从本地图片服务器加载
-    return `images/${g.id}.jpg`;
+    return '';  // 没有imageUrl则返回空字符串，不显示图片
   }
 
   // 生成商品图片HTML：<img> + onerror回退emoji
@@ -7662,8 +7659,7 @@ const App = (function(){
         if(Array.isArray(parsed) && parsed.length > 0){
           GOODS_DATA.length = 0;
           parsed.forEach(g => {
-            // 兼容旧数据：没有imageUrl时自动补上本地图片路径
-            if(!g.imageUrl && g.id) g.imageUrl = `images/${g.id}.jpg`;
+            // 不再自动补上本地图片路径，只使用Cloudinary图片
             GOODS_DATA.push(g);
           });
         }
@@ -7816,8 +7812,8 @@ const App = (function(){
           if(k && v) attrs[k.trim()] = v.trim();
         });
       }
-      // 图片URL：直接使用本地服务器路径，交给 img onerror 兜底（不依赖预加载缓存）
-      const finalImgUrl = imageUrl || `images/${id}.jpg`;
+      // 图片URL：只使用Cloudinary图片，不回退到本地
+      const finalImgUrl = imageUrl || '';
       goods.push({id,catId,emoji,name,spec,price,unit,stock,tag:tags,attrs,specs,imageUrl:finalImgUrl});
     });
 
