@@ -1,21 +1,23 @@
-# Python
-__pycache__/
-*.py[cod]
-*.pyo
+# 忽略图片文件
+images/
+images2/
+cloudinary foto/
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.webp
+*.JPG
+*.JPEG
+*.PNG
 
-# 本地服务器（不需要上传）
-server.py
-make_template.py
+# 忽略 Excel 临时文件
+~$*.xlsx
 
-# 临时文件
-~$*
-*.tmp
-goods_data.json
+# 忽略 CSV 数据文件（除了模板）
+商品数据*.csv
+listino*.csv
 
-# WorkBuddy 工作目录
-.workbuddy/
-
-# 系统文件
-.DS_Store
-Thumbs.db
-desktop.ini
+# 忽略其他临时文件
+*.log
+新建 文本文档.txt
