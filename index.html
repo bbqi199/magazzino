@@ -7942,6 +7942,13 @@ var LOGIN_SHEET_CSV = 'https://docs.google.com/spreadsheets/d/1dsebhgSvzq7ebVTBR
 var SESSION_KEY = 'sc_login_user';
 var _cachedUsers = null;
 
+// 本地测试：直接跳过登录验证
+var IS_LOCAL_HOST = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+if(IS_LOCAL_HOST){
+  console.log('本地模式：跳过登录验证');
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify({username: 'local_test', name: '本地测试用户'}));
+}
+
 function loadUserSheet(callback){
   if(_cachedUsers){ callback(_cachedUsers); return; }
   var xhr = new XMLHttpRequest();
@@ -8025,7 +8032,12 @@ function doLogin(){
 }
 
 // 页面加载后检查登录状态
-checkLoginState();
+if(!IS_LOCAL_HOST){
+  checkLoginState();
+}else{
+  document.getElementById('login-overlay').classList.add('hidden');
+  App.init();
+}
 </script>
 <!-- SheetJS 用于Excel解析 -->
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" 
