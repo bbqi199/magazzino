@@ -7943,7 +7943,7 @@ var SESSION_KEY = 'sc_login_user';
 var _cachedUsers = null;
 
 // 本地测试：直接跳过登录验证
-var IS_LOCAL_HOST = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+var IS_LOCAL_HOST = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:';
 if(IS_LOCAL_HOST){
   console.log('本地模式：跳过登录验证');
   sessionStorage.setItem(SESSION_KEY, JSON.stringify({username: 'local_test', name: '本地测试用户'}));
