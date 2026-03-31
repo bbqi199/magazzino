@@ -7158,26 +7158,33 @@ const App = (function(){
 
   // ---------- 购物车 ----------
   function cartKey(goodId, spec){ return `${goodId}__${spec}`; }
+  
+  // 从规格描述中提取最后出现的数字作为数量（如"6包/提"→6，"550ml×24"→24，"10片装"→10）
+  function getSpecQty(spec){
+    if(!spec) return 1;
+    const numMatch = spec.match(/\d+/g);
+    return numMatch ? parseInt(numMatch[numMatch.length-1], 10) : 1;
+  }
+  
   function addToCart(){
-    const g=state.currentGood, spec=state.currentSpec, qty=state.currentQty;
+    const g=state.currentGood, spec=state.currentSpec;
     const key=cartKey(g.id,spec);
     const existing=state.cartItems.find(i=>i.key===key);
-    if(existing){ existing.qty+=qty; }
-    else { state.cartItems.push({key,goodId:g.id,spec,qty,checked:true}); }
+    // 每次加1箱
+    if(existing){ existing.qty+=1; }
+    else { state.cartItems.push({key,goodId:g.id,spec,qty:1,checked:true}); }
     save(); updateCartBadge(); showToast('已加入购物车 🛒');
   }
   function quickAddCart(goodId){
     const g=GOODS_DATA.find(x=>String(x.id)===String(goodId));
     if(!g) return;
     const spec=g.specs[0];
-    // 从规格描述中提取最后出现的数字作为数量（如"6包/提"→6，"550ml×24"→24，"10片装"→10）
-    const numMatch=spec.match(/\d+/g);
-    const qty=numMatch ? parseInt(numMatch[numMatch.length-1],10) : 1;
     const key=cartKey(g.id,spec);
     const existing=state.cartItems.find(i=>i.key===key);
-    if(existing){ existing.qty+=qty; }
-    else { state.cartItems.push({key,goodId:g.id,spec,qty,checked:true}); }
-    save(); updateCartBadge(); showToast('+'+qty+' 已加入购物车');
+    // 每次加1箱
+    if(existing){ existing.qty+=1; }
+    else { state.cartItems.push({key,goodId:g.id,spec,qty:1,checked:true}); }
+    save(); updateCartBadge(); showToast('+1箱 已加入购物车');
   }
   function buyNow(){
     addToCart();
@@ -7202,12 +7209,12 @@ const App = (function(){
     const spec   = g ? (g.specs && g.specs[0] ? g.specs[0] : (g.spec||'')) : '';
     const key    = goodId + '|' + spec;
 
-    // 加入购物车（已有则+1，没有则新增）
+    // 加入购物车（已有则+1箱，没有则新增）
     const existing = state.cartItems.find(function(i){ return i.key === key; });
     if(existing){
-      existing.qty += 1;
+      existing.qty += 1;  // 每次加1箱
     } else {
-      state.cartItems.push({ key: key, goodId: goodId, spec: spec, qty: 1, checked: true });
+      state.cartItems.push({ key: key, goodId: goodId, spec: spec, qty: 1, checked: true });  // qty=1箱
     }
     save();
     updateCartBadge();
@@ -7258,7 +7265,12 @@ const App = (function(){
   // ==================== 扫码功能 END ====================
 
   function updateCartBadge(){
-    const total=state.cartItems.reduce((s,i)=>s+i.qty,0);
+    // 计算实际商品总数：箱数 × 规格数
+    const total=state.cartItems.reduce((s,i)=>{
+      const g=GOODS_DATA.find(x=>String(x.id)===String(i.goodId));
+      const specQty = g ? getSpecQty(i.spec) : 1;
+      return s + (i.qty * specQty);
+    },0);
     ['cart-badge','cart-badge2','cart-badge3','cart-badge4','cart-badge5'].forEach(id=>{
       const el=$(id); if(!el) return;
       el.textContent=total>99?'99+':total;
@@ -7286,6 +7298,8 @@ const App = (function(){
       <div class="cart-list">${state.cartItems.map((item,idx)=>{
         const g=GOODS_DATA.find(x=>String(x.id)===String(item.goodId));
         if(!g) return '';
+        const specQty = getSpecQty(item.spec);  // 规格数量
+        const actualQty = item.qty * specQty;  // 实际商品数量
         return `<div class="cart-item">
           <div class="cart-check ${item.checked?'checked':''}" onclick="App.toggleCartCheck(${idx})">${item.checked?'✓':''}</div>
           ${goodsImgHtml(g,'cart-img')}
@@ -7296,7 +7310,7 @@ const App = (function(){
               <div class="cart-price">${formatPrice(g.price*item.qty)}</div>
               <div class="cart-stepper">
                 <button class="cart-btn minus" onclick="App.changeCartQty(${idx},-1)">−</button>
-                <div class="cart-num">${item.qty}</div>
+                <div class="cart-num">${item.qty}箱×${specQty}=${actualQty}</div>
                 <button class="cart-btn" onclick="App.changeCartQty(${idx},1)">+</button>
               </div>
             </div>
@@ -7364,6 +7378,8 @@ const App = (function(){
         <div class="checkout-goods">${items.map(item=>{
           const g=GOODS_DATA.find(x=>String(x.id)===String(item.goodId));
           if(!g) return '';
+          const specQty = getSpecQty(item.spec);  // 规格数量
+          const actualQty = item.qty * specQty;  // 实际商品数量
           return `<div class="checkout-goods-item">
             ${goodsImgHtml(g,'checkout-goods-img')}
             <div class="checkout-goods-info">
@@ -7372,7 +7388,7 @@ const App = (function(){
             </div>
             <div class="checkout-goods-right">
               <div class="checkout-goods-price">${formatPrice(g.price*item.qty)}</div>
-              <div class="checkout-goods-qty">×${item.qty}</div>
+              <div class="checkout-goods-qty">×${item.qty}箱 (${actualQty})</div>
             </div>
           </div>`;
         }).join('')}</div>
