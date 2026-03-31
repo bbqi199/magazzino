@@ -6958,9 +6958,11 @@ const App = (function(){
   const _imgCache = {}; // id → url | null (null=无图)
 
   function getImgUrl(g){
-    // 只使用商品自带的 imageUrl 字段，不回退到本地图片
+    // 优先使用商品自带的 imageUrl
     if(g.imageUrl && g.imageUrl.trim()) return g.imageUrl.trim();
-    return '';  // 没有imageUrl则返回空字符串，不显示图片
+    // 回退到 Cloudinary
+    if(g.id) return 'https://res.cloudinary.com/dzcy6twle/image/upload/q_auto,f_auto/products/' + encodeURIComponent(String(g.id));
+    return '';
   }
 
   // 生成商品图片HTML：<img> + onerror回退emoji
@@ -8214,3 +8216,4 @@ if(!IS_LOCAL_HOST){
 <!-- 更新时间: 2026-03-31 16:36:27 -->
 <!-- 更新时间: 2026-03-31 22:00:45 -->
 <!-- 更新时间: 2026-03-31 22:45:06 -->
+<!-- 更新时间: 2026-03-31 23:53:13 -->
