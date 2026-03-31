@@ -8101,6 +8101,15 @@ if(!IS_LOCAL_HOST){
   // ===== Google Sheets 订单同步配置 =====
   var GSHEET_URL = 'https://script.google.com/macros/s/AKfycbyjmOZcqSZZSm3rUdlsUraejAs5JwnwcEujSeRtWdEQt07-LXgTTh6_Nsk4jpRMzmgdOw/exec';
 
+  // 从规格描述中提取最后出现的数字作为数量（与App内部getSpecQty一致）
+  function _getSpecQty(spec){
+    if(!spec) return 1;
+    var parsed = parseInt(spec, 10);
+    if(!isNaN(parsed)) return parsed;
+    var numMatch = spec.match(/\d+/g);
+    return numMatch ? parseInt(numMatch[numMatch.length-1], 10) : 1;
+  }
+
   // 上传订单到 Google Sheets（每个商品单独一行，分列写入）
   // 用 GET + URL参数方式，彻底绕开 no-cors 的 Content-Type 限制
   function sendOrderToSheet(order){
@@ -8112,7 +8121,7 @@ if(!IS_LOCAL_HOST){
     var itemRows = (order.items || []).map(function(i){
       var price  = parseFloat(i.price)  || 0;
       var qty    = parseInt(i.qty)      || 0;
-      var specQty = getSpecQty(i.spec);
+      var specQty = _getSpecQty(i.spec);
       var amount = parseFloat((price * qty * specQty).toFixed(2));  // 箱数 × 规格数 × 单价
       var label = ''; // 从商品的 tag 数组获取标签
       if(i.tag && Array.isArray(i.tag) && i.tag.length > 0){
