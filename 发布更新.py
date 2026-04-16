@@ -1,119 +1,150 @@
 """
 一键发布脚本
-功能：自动找最新CSV → 同步商品数据到index.html → 推送到GitHub
+功能：自动找最新Excel导入模板 → 生成 goods.json → 推送到GitHub
 用法：双击运行，或在命令行执行 python 发布更新.py
 """
-import csv, json, re, os, glob, subprocess, sys, io
+import json, os, glob, subprocess, sys, io
 from datetime import datetime
 
 # 修复Windows控制台中文输出
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
 
-# ===== 第一步：找最新的CSV文件 =====
-csv_files = glob.glob('商品数据*.csv') + glob.glob('*.csv')
-csv_files = [f for f in csv_files if '模板' not in f]  # 排除模板文件
+# ===== 第一步：找本文件夹中包含"导入"关键字的Excel文件 =====
+xlsx_files = glob.glob('*.xlsx')
+xlsx_files = [f for f in xlsx_files if not f.startswith('~$')]
 
-if not csv_files:
-    print('❌ 找不到CSV文件！请先在商品管理页导出CSV。')
+if not xlsx_files:
+    print('❌ 未找到 Excel 文件！')
     input('按回车键退出...')
     sys.exit(1)
 
-# 按修改时间取最新的
-latest_csv = max(csv_files, key=os.path.getmtime)
-print(f'✅ 找到CSV文件：{latest_csv}')
-
-# ===== 第二步：读取CSV，转换商品数据 =====
-goods = []
-try:
-    with open(latest_csv, encoding='utf-8-sig') as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            spec_str = row.get('规格选项', '').strip()
-            specs = [s.strip() for s in spec_str.split('|') if s.strip()] if '|' in spec_str else ([spec_str] if spec_str else [])
-            img = row.get('商品图片URL', '').strip().replace('/images/', 'images/')
-            attrs = {}
-            kv = row.get('属性键值对', '').strip()
-            if kv:
-                for pair in kv.split('|'):
-                    if ':' in pair:
-                        k, v = pair.split(':', 1)
-                        attrs[k.strip()] = v.strip()
-            try:
-                cat_id = int(row['所属分类ID'].strip())
-            except:
-                cat_id = 0
-
-            g = {
-                'id':       row['商品编号'].strip(),
-                'catId':    cat_id,
-                'emoji':    row.get('商品图标', '📦').strip() or '📦',
-                'name':     row['商品名称'].strip(),
-                'spec':     row['规格描述'].strip(),
-                'price':    float(row['单价']) if row['单价'].strip() else 0,
-                'unit':     row['计量单位'].strip(),
-                'stock':    int(row['库存数量']) if row['库存数量'].strip() else 999,
-                'tag':      [t.strip() for t in row.get('商品标签', '').split(',') if t.strip()],
-                'attrs':    attrs,
-                'specs':    specs,
-                'imageUrl': img
-            }
-            goods.append(g)
-except Exception as e:
-    print(f'❌ 读取CSV出错：{e}')
-    input('按回车键退出...')
-    sys.exit(1)
-
-print(f'✅ 读取商品数据：共 {len(goods)} 件商品')
-
-# ===== 第三步：写入index.html（强制写入，即使内容没变） =====
-lines = ['const GOODS_DATA = [']
-for i, g in enumerate(goods):
-    comma = ',' if i < len(goods) - 1 else ''
-    lines.append('  ' + json.dumps(g, ensure_ascii=False, separators=(',', ':')) + comma)
-lines.append('];')
-new_block = '\n'.join(lines)
-
-with open('index.html', encoding='utf-8') as f:
-    content = f.read()
-
-# 先确认 GOODS_DATA 标记存在
-if not re.search(r'const GOODS_DATA = \[', content):
-    print('❌ 写入失败：index.html 中未找到 GOODS_DATA！')
-    input('按回车键退出...')
-    sys.exit(1)
-
-# 强制更新 GOODS_DATA
-new_content = re.sub(r'const GOODS_DATA = \[.*?\];', new_block, content, flags=re.DOTALL)
-
-# 强制添加时间戳注释，确保每次都有变化
-timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-new_content = new_content + f'\n<!-- 更新时间: {timestamp} -->'
-
-# 始终写入文件
-with open('index.html', 'w', encoding='utf-8') as f:
-    f.write(new_content)
-
-if new_content == content:
-    print(f'✅ 数据内容相同，但已更新文件（确保每次都推送，共 {len(goods)} 件）')
+# 优先选择包含"导入"关键字的文件
+import_files = [f for f in xlsx_files if '导入' in f]
+if import_files:
+    EXCEL_FILE = import_files[0]
 else:
-    print('✅ 商品数据已写入 index.html')
+    EXCEL_FILE = xlsx_files[0]
+
+print(f'📂 已选择: {EXCEL_FILE}')
+
+# ===== 第二步：读取Excel，转换商品数据 =====
+try:
+    import openpyxl
+except ImportError:
+    print('❌ 需要 openpyxl 库，请运行: pip install openpyxl')
+    input('按回车键退出...')
+    sys.exit(1)
+
+try:
+    wb = openpyxl.load_workbook(EXCEL_FILE, data_only=True)
+    ws = wb['商品数据']
+    
+    goods = []
+    row_num = 0
+    for row in ws.iter_rows(min_row=2):  # 跳过标题行
+        row_num += 1
+        
+        # A=0(编号), B=1(分类), C=2(名称), D=3(规格), E=4(单价), F=5(单位), G=6(库存)
+        # H=7(标签), I=8(图标), J=9(规格选项), K=10(属性), L=11(图片)
+        id_cell = row[0]
+        id_val = str(id_cell.value).strip() if id_cell.value is not None else ''
+        
+        # 去掉可能的浮点尾部（如 90.0 → 90）
+        if '.' in id_val:
+            id_val = id_val.rstrip('0').rstrip('.')
+        
+        # 跳过空行和模板示例行
+        if not id_val or id_val == 'None' or '必填' in id_val or id_val.startswith('例：'):
+            continue
+        
+        # 处理标签
+        tags = []
+        if row[7].value:
+            tags = [t.strip() for t in str(row[7].value).split(',') if t.strip()]
+        
+        # 处理规格选项
+        specs = []
+        if row[9].value:
+            specs = [s.strip() for s in str(row[9].value).split('|') if s.strip()]
+        
+        # 处理属性键值对
+        attrs = {}
+        if row[10].value:
+            for pair in str(row[10].value).split('|'):
+                if ':' in pair:
+                    k, v = pair.split(':', 1)
+                    attrs[k.strip()] = v.strip()
+        
+        # 处理图片URL
+        img = str(row[11].value).strip() if row[11].value else ''
+        img = img.replace('/images/', 'images/')
+        
+        # 处理分类ID
+        try:
+            cat_id = int(float(row[1].value)) if row[1].value else 0
+        except:
+            cat_id = 0
+        
+        # 处理价格
+        try:
+            price = float(row[4].value) if row[4].value else 0
+        except:
+            price = 0
+        
+        # 处理库存
+        try:
+            stock = int(float(row[6].value)) if row[6].value else 999
+        except:
+            stock = 999
+        
+        g = {
+            'id':       id_val,
+            'catId':    cat_id,
+            'emoji':    str(row[8].value).strip() if row[8].value else '📦',
+            'name':     str(row[2].value).strip() if row[2].value else '',
+            'spec':     str(row[3].value).strip() if row[3].value else '',
+            'price':    price,
+            'unit':     str(row[5].value).strip() if row[5].value else '',
+            'stock':    stock,
+            'tag':      tags,
+            'attrs':    attrs,
+            'specs':    specs,
+            'imageUrl': img
+        }
+        goods.append(g)
+    
+    wb.close()
+    print(f'✅ 读取完成：共 {len(goods)} 件商品')
+    
+except Exception as e:
+    print(f'❌ 读取Excel出错：{e}')
+    input('按回车键退出...')
+    sys.exit(1)
+
+# ===== 第三步：写入 goods.json =====
+goods_json_str = json.dumps(goods, ensure_ascii=False, indent=None, separators=(',', ':'))
+
+with open('goods.json', 'w', encoding='utf-8') as f:
+    f.write(goods_json_str)
+
+print(f'✅ 商品数据已写入 goods.json（共 {len(goods)} 件）')
 
 # ===== 第四步：git add、commit、push =====
 now = datetime.now().strftime('%Y-%m-%d %H:%M')
 commit_msg = f'更新商品数据 {now}（共{len(goods)}件）'
 
 try:
-    # 只添加 index.html，不添加其他文件
-    subprocess.run(['git', 'add', '-f', 'index.html'], check=True)
-
+    # 添加 goods.json
+    subprocess.run(['git', 'add', '-f', 'goods.json'], check=True)
+    
     # 提交
     subprocess.run(['git', 'commit', '-m', commit_msg], check=True)
-
-    # 推送（正常推送，不强制）
+    
+    # 推送
     print('📤 推送到GitHub...')
     subprocess.run(['git', 'push', 'origin', 'main'], check=True)
-
+    
     print(f'\n🎉 发布成功！约1-2分钟后线上同步。')
     print(f'   线上地址：https://bbqi199.github.io/magazzino/')
 except subprocess.CalledProcessError as e:

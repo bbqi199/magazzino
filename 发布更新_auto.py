@@ -16,37 +16,62 @@ if not csv_files:
 latest_csv = max(csv_files, key=os.path.getmtime)
 print(f'✅ 找到CSV文件：{latest_csv}')
 
+# 中意列名映射表
+COLUMN_MAP = {
+    '商品编号': 'Codice Prodotto',
+    '所属分类ID': 'ID Categoria',
+    '商品图标': 'Icona Prodotto',
+    '商品名称': 'Nome Prodotto',
+    '规格描述': 'Descrizione Specifiche',
+    '单价': 'Prezzo Unitario',
+    '计量单位': 'Unità di Misura',
+    '库存数量': 'Quantità in Magazzino',
+    '商品标签': 'Tag Prodotto',
+    '属性键值对': 'Proprietà Chiave-Valore',
+    '商品图片URL': 'URL Immagine Prodotto',
+    '规格选项': 'Opzioni Specifiche',
+}
+
+def get_row_value(row, zh_col, default=''):
+    """根据中文列名获取值，优先用中文，fallback到意大利语"""
+    if zh_col in row and row[zh_col].strip():
+        return row[zh_col]
+    it_col = COLUMN_MAP.get(zh_col, '')
+    if it_col and it_col in row and row[it_col].strip():
+        return row[it_col]
+    return default
+
 # 读取CSV
 goods = []
 try:
     with open(latest_csv, encoding='utf-8-sig') as f:
         reader = csv.DictReader(f)
         for row in reader:
-            spec_str = row.get('规格选项', '').strip()
+            spec_str = get_row_value(row, '规格选项', '').strip()
             specs = [s.strip() for s in spec_str.split('|') if s.strip()] if '|' in spec_str else ([spec_str] if spec_str else [])
-            img = row.get('商品图片URL', '').strip().replace('/images/', 'images/')
+            img = get_row_value(row, '商品图片URL', '').strip().replace('/images/', 'images/')
             attrs = {}
-            kv = row.get('属性键值对', '').strip()
+            kv = get_row_value(row, '属性键值对', '').strip()
             if kv:
                 for pair in kv.split('|'):
                     if ':' in pair:
                         k, v = pair.split(':', 1)
                         attrs[k.strip()] = v.strip()
             try:
-                cat_id = int(row['所属分类ID'].strip())
+                cat_id = int(get_row_value(row, '所属分类ID', '0').strip())
             except:
                 cat_id = 0
 
             g = {
-                'id':       row['商品编号'].strip(),
+                'id':       get_row_value(row, '商品编号').strip(),
                 'catId':    cat_id,
-                'emoji':    row.get('商品图标', '📦').strip() or '📦',
-                'name':     row['商品名称'].strip(),
-                'spec':     row['规格描述'].strip(),
-                'price':    float(row['单价']) if row['单价'].strip() else 0,
-                'unit':     row['计量单位'].strip(),
-                'stock':    int(row['库存数量']) if row['库存数量'].strip() else 999,
-                'tag':      [t.strip() for t in row.get('商品标签', '').split(',') if t.strip()],
+                'emoji':    get_row_value(row, '商品图标', '📦').strip() or '📦',
+                'name':     get_row_value(row, '商品名称').strip(),
+                'spec':     get_row_value(row, '规格描述').strip(),
+                'price':    float(get_row_value(row, '单价', '0')) if get_row_value(row, '单价').strip() else 0,
+                'unit':     get_row_value(row, '计量单位').strip(),
+                'stock':    int(get_row_value(row, '库存数量', '999')) if get_row_value(row, '库存数量').strip() else 999,
+                'tag':      [t.strip() for t in get_row_value(row, '商品标签', '').split(',') if t.strip()],
                 'attrs':    attrs,
                 'specs':    specs,
                 'imageUrl': img
@@ -58,38 +83,29 @@ except Exception as e:
 
 print(f'✅ 读取商品数据：共 {len(goods)} 件商品')
 
-# 写入index.html
-lines = ['const GOODS_DATA = [']
-for i, g in enumerate(goods):
-    comma = ',' if i < len(goods) - 1 else ''
-    lines.append('  ' + json.dumps(g, ensure_ascii=False, separators=(',', ':')) + comma)
-lines.append('];')
-new_block = '\n'.join(lines)
+# 写入 goods.json
+# index.html 通过 fetch('goods.json') 动态加载商品数据，
+# 因此数据应写入 goods.json，而非直接嵌入 HTML。
+goods_json_str = json.dumps(goods, ensure_ascii=False, indent=None, separators=(',', ':'))
+with open('goods.json', 'w', encoding='utf-8') as f:
+    f.write(goods_json_str)
+print(f'✅ 商品数据已写入 goods.json（共 {len(goods)} 件）')
 
+# 在 index.html 末尾添加时间戳注释，确保 git 每次都能检测到变化并推送
+timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 with open('index.html', encoding='utf-8') as f:
     content = f.read()
-
-if not re.search(r'const GOODS_DATA = \[', content):
-    print('❌ 写入失败：index.html 中未找到 GOODS_DATA！')
-    sys.exit(1)
-
-new_content = re.sub(r'const GOODS_DATA = \[.*?\];', new_block, content, flags=re.DOTALL)
-
-# 添加时间戳确保每次都有变化
-timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-new_content = new_content + f'\n<!-- 更新时间: {timestamp} -->'
-
+new_content = content + f'\n<!-- 更新时间: {timestamp} -->'
 with open('index.html', 'w', encoding='utf-8') as f:
     f.write(new_content)
-
-print('✅ 商品数据已写入 index.html')
+print('✅ index.html 时间戳已更新')
 
 # Git操作
 now = datetime.now().strftime('%Y-%m-%d %H:%M')
 commit_msg = f'更新商品数据 {now}（共{len(goods)}件）'
 
 try:
-    subprocess.run(['git', 'add', '-f', 'index.html'], check=True, capture_output=True)
+    subprocess.run(['git', 'add', '-f', 'goods.json', 'index.html'], check=True, capture_output=True)
     subprocess.run(['git', 'commit', '-m', commit_msg], check=True, capture_output=True)
     print('📤 推送到GitHub...')
     subprocess.run(['git', 'push', 'origin', 'main'], check=True, capture_output=True)

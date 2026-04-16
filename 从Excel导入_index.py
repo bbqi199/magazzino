@@ -1,30 +1,21 @@
 """
-从Excel模板直接导入商品数据
-不经过CSV，避免数字被转成科学计数法
+从Excel模板导入商品数据 → 更新 goods.json → 发布 index.html 到 GitHub
+功能：读取Excel模板 → 生成goods.json → 更新index.html时间戳 → git push
+用法：双击运行，或在命令行执行 python 从Excel导入_index.py
+
+与 从Excel导入.py 的区别：
+  - 从Excel导入.py：更新 goods.json + listino.html（内嵌GOODS_DATA）
+  - 从Excel导入_index.py：更新 goods.json + index.html（fetch加载goods.json）
 """
-import openpyxl, json, re, os, subprocess, sys, io, glob
+import openpyxl, json, re, os, subprocess, sys, io
 from datetime import datetime
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
 
-# 查找本文件夹中的 Excel 文件（排除临时文件）
-xlsx_files = glob.glob('*.xlsx')
-xlsx_files = [f for f in xlsx_files if not f.startswith('~$')]
+EXCEL_FILE = '商品数据导入模板.xlsx'
 
-if not xlsx_files:
-    print('❌ 未找到 Excel 文件！')
-    input('按回车键退出...')
-    sys.exit(1)
-
-# 优先选择包含"导入"关键字的文件
-import_files = [f for f in xlsx_files if '导入' in f]
-if import_files:
-    EXCEL_FILE = import_files[0]
-else:
-    EXCEL_FILE = xlsx_files[0]
-
-print(f'📂 已选择: {EXCEL_FILE}')
+print(f'📂 正在读取 Excel 文件: {EXCEL_FILE}')
 
 try:
     # 不用read_only模式，这样可以访问单元格对象和格式信息
@@ -116,7 +107,9 @@ for row in ws.iter_rows(min_row=2):  # 跳过标题行
 wb.close()
 print(f'✅ 读取完成：共 {len(goods)} 件商品')
 
-# 写入 goods.json
+# =============================================
+# 第一步：写入 goods.json
+# =============================================
 lines = []
 for i, g in enumerate(goods):
     comma = ',' if i < len(goods) - 1 else ''
@@ -129,49 +122,37 @@ with open('goods.json', 'w', encoding='utf-8') as f:
 print(f'✅ 商品数据已写入 goods.json')
 
 # =============================================
-# 【关键修复】同时更新 listino.html 中的 GOODS_DATA
+# 第二步：在 index.html 末尾添加时间戳注释
+# 确保每次 git 都能检测到变化并推送
 # =============================================
-if os.path.exists('listino.html'):
-    print('📝 正在更新 listino.html 中的 GOODS_DATA...')
-    with open('listino.html', encoding='utf-8') as f:
-        listino_content = f.read()
-    
-    # 生成新的 GOODS_DATA 块
-    listino_lines = ['const GOODS_DATA = [']
-    for i, g in enumerate(goods):
-        comma = ',' if i < len(goods) - 1 else ''
-        listino_lines.append('  ' + json.dumps(g, ensure_ascii=False, separators=(',', ':')) + comma)
-    listino_lines.append('];')
-    new_goods_block = '\n'.join(listino_lines)
-    
-    # 替换 listino.html 中的 GOODS_DATA
-    if re.search(r'const GOODS_DATA = \[', listino_content):
-        updated_content = re.sub(r'const GOODS_DATA = \[.*?\];', new_goods_block, listino_content, flags=re.DOTALL)
-        with open('listino.html', 'w', encoding='utf-8') as f:
-            f.write(updated_content)
-        print('✅ listino.html 已更新')
-    else:
-        print('⚠️ listino.html 中未找到 GOODS_DATA，将跳过')
-
-# 在 index.html 末尾添加时间戳注释，确保 git 每次都能检测到变化
 timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-with open('index.html', encoding='utf-8') as f:
-    html_content = f.read()
-with open('index.html', 'w', encoding='utf-8') as f:
-    f.write(html_content + f'\n<!-- 更新时间: {timestamp} -->')
-print(f'✅ index.html 时间戳已更新')
 
-# Git 操作
+if os.path.exists('index.html'):
+    with open('index.html', encoding='utf-8') as f:
+        html_content = f.read()
+    
+    # 移除旧的时间戳注释（避免无限增长）
+    html_content = re.sub(r'\n*<!-- 更新时间: .*? -->\s*$', '', html_content)
+    
+    with open('index.html', 'w', encoding='utf-8') as f:
+        f.write(html_content.rstrip() + f'\n<!-- 更新时间: {timestamp} -->')
+    print(f'✅ index.html 时间戳已更新')
+else:
+    print('⚠️ 未找到 index.html，跳过时间戳更新')
+
+# =============================================
+# 第三步：Git 操作（add → commit → push）
+# =============================================
 now = datetime.now().strftime('%Y-%m-%d %H:%M')
-commit_msg = f'更新商品数据 {now}（共{len(goods)}件）'
+commit_msg = f'INDEX 更新商品数据 {now}（共{len(goods)}件）'
 
 try:
-    subprocess.run(['git', 'add', '-f', 'goods.json', 'index.html', 'listino.html'], check=True, capture_output=True)
+    subprocess.run(['git', 'add', '-f', 'goods.json', 'index.html'], check=True, capture_output=True)
     subprocess.run(['git', 'commit', '-m', commit_msg], check=True, capture_output=True)
     print('📤 推送到GitHub...')
     subprocess.run(['git', 'push', 'origin', 'main'], check=True, capture_output=True)
     print(f'\n🎉 发布成功！约1-2分钟后线上同步。')
-    print(f'   线上地址：https://bbqi199.github.io/magazzino/listino.html')
+    print(f'   线上地址：https://bbqi199.github.io/magazzino/')
 except subprocess.CalledProcessError as e:
     print(f'⚠️ git操作失败（可能没有改动）：{e}')
 
