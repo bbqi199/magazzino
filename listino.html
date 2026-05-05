@@ -29583,6 +29583,10 @@ const App = (function(){
     profile: { name:'', phone:'' },
     orderTabIdx: 0,
     editAddrIdx: -1,
+    // 搜索状态（用于后退时恢复）
+    searchKeyword: '',      // 搜索关键词
+    searchScrollTop: 0,    // 搜索结果滚动位置
+    fromSearch: false,      // 是否从搜索结果进入详情页
   };
 
   // ---------- 持久化 ----------
@@ -34412,6 +34416,33 @@ const B2_IMG_MAP = {
       state.currentPage = prev;
       document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
       $(prev).classList.add('active');
+      
+      // 从搜索结果后退时，恢复搜索覆盖层
+      if(prev === 'page-home' && state.fromSearch){
+        const overlay = $('search-overlay');
+        const homeBody = $('home-body');
+        const searchInput = $('search-input');
+        
+        // 1. 恢复搜索关键词到输入框
+        if(searchInput && state.searchKeyword) {
+          searchInput.value = state.searchKeyword;
+        }
+        
+        // 2. 重新生成搜索结果（这会自动显示overlay并隐藏homeBody）
+        if(state.searchKeyword) {
+          renderSearchResults(state.searchKeyword);
+        }
+        
+        // 3. 等待DOM更新后，恢复滚动位置
+        if(overlay && state.searchScrollTop > 0) {
+          setTimeout(() => {
+            overlay.scrollTop = state.searchScrollTop;
+          }, 50);
+        }
+        
+        // 重置搜索状态
+        state.fromSearch = false;
+      }
     }
   }
   // 监听手机系统后退键（Android / 浏览器后退按钮）
@@ -34510,6 +34541,17 @@ const B2_IMG_MAP = {
     state.currentGood = g;
     state.currentSpec = g.specs[0];
     state.currentQty = 1;
+    
+    // 检查是否从搜索结果进入
+    const overlay = $('search-overlay');
+    if(overlay && overlay.style.display !== 'none'){
+      state.fromSearch = true;
+      state.searchKeyword = $('search-input') ? $('search-input').value : '';
+      state.searchScrollTop = overlay.scrollTop;
+    } else {
+      state.fromSearch = false;
+    }
+    
     renderDetail();
     showPage('page-detail');
   }
