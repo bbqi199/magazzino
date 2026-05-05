@@ -34445,6 +34445,17 @@ const B2_IMG_MAP = {
       }
     }
   }
+  // 从详情页跳转到当前商品所属分类
+  function goToCategory(){
+    const g = state.currentGood;
+    if(!g) return;
+    showPage('page-home');
+    setTimeout(function(){
+      switchCat(g.catId);
+      const catGoods = document.getElementById('cat-goods-container');
+      if(catGoods) catGoods.scrollIntoView({behavior:'smooth'});
+    }, 100);
+  }
   // 监听手机系统后退键（Android / 浏览器后退按钮）
   window.addEventListener('popstate', function(){
     if(state.pageStack.length > 0){
@@ -34566,6 +34577,9 @@ const B2_IMG_MAP = {
           <div class="detail-price">${formatPrice(g.price)}</div>
           <div class="detail-price-unit">/${g.unit}</div>
           <div class="detail-stock">Disponibile</div>
+        </div>
+        <div style="margin-top:8px;">
+          <button class="btn-buy" style="width:100%;font-size:14px;padding:10px;" onclick="App.goToCategory()">Esplora la categoria</button>
         </div>
         <div class="detail-tags">${(g.tag||[]).map(t=>`<span class="detail-tag">${t}</span>`).join('')}</div>
       </div>
@@ -35983,7 +35997,7 @@ function buyNow() {
   }
 
   return {
-    switchTab,showPage,goBack,
+    switchTab,showPage,goBack,goToCategory,
     switchCat,switchCat2,
     openDetail,selectSpec,changeQty,
     onSearchInput,onSearchFocus,clearSearch,
