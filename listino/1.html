@@ -1,9 +1,11 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Sistema di Ordinazione Rapido</title>
+<!-- html5-qrcode for camera barcode scanning -->
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <style>
   /* ===== 全局重置 ===== */
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
@@ -96,6 +98,11 @@
   .goods-price { font-size:14px; font-weight:700; color:var(--primary); flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .goods-price span { font-size:11px; font-weight:400; color:var(--text-3); }
   .add-btn { width:26px; height:26px; border-radius:50%; background:var(--primary); color:#fff; border:none; font-size:16px; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; }
+  .stepper { display:inline-flex; align-items:center; gap:3px; vertical-align:middle; }
+  .stepper-btn { width:20px; height:20px; border-radius:50%; border:none; font-size:12px; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; }
+  .stepper-btn.minus { background:#f0f0f0; color:var(--text-2); }
+  .stepper-btn.plus { background:var(--primary); color:#fff; }
+  .stepper-num { font-size:12px; font-weight:700; color:var(--primary); min-width:18px; text-align:center; display:inline-block; }
 
   /* 商品列表模式 */
   .goods-list-item { background:var(--white); border-radius:var(--radius); margin-bottom:8px; padding:12px; display:flex; gap:12px; box-shadow:var(--shadow); cursor:pointer; border:1px solid var(--border); }
@@ -106,10 +113,10 @@
   .goods-list-spec { font-size:12px; color:var(--text-3); margin-top:4px; }
   .goods-list-bottom { display:flex; align-items:center; justify-content:space-between; margin-top:6px; }
   .goods-unit { font-size:12px; color:var(--text-3); }
-  .stepper { display:flex; align-items:center; gap:6px; }
-  .stepper-btn { width:24px; height:24px; border-radius:50%; background:var(--primary); color:#fff; border:none; font-size:14px; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+  .stepper { display:flex; align-items:center; gap:4px; }
+  .stepper-btn { width:24px; height:24px; border-radius:50%; background:var(--primary); color:#fff; border:none; font-size:13px; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; }
   .stepper-btn.minus { background:#f0f0f0; color:var(--text-2); }
-  .stepper-num { font-size:14px; font-weight:600; min-width:20px; text-align:center; color:var(--text); }
+  .stepper-num { font-size:13px; font-weight:600; min-width:18px; text-align:center; color:var(--text); }
 
   /* ===== Dettaglio Prodotto页 ===== */
   .detail-img { width:100%; aspect-ratio:1; background:#f5f5f5; display:flex; align-items:center; justify-content:center; font-size:80px; position:relative; overflow:hidden; }
@@ -414,10 +421,6 @@
     .cart-list::-webkit-scrollbar-thumb { background: #bbb; border-radius: 3px; }
   }
 </style>
-
-<!-- html5-qrcode for camera barcode scanning -->
-<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-
 </head>
 <body>
 
@@ -463,7 +466,7 @@
     <div class="page-body" id="home-body">
       <!-- Banner -->
       <div class="banner-wrap">
-        <div class="banner">
+        <div class="banner" id="home-banner">
           <h2>ECO SHOP</h2>
           <p>🔥 SCOPRI OLTRE 4.500 ARTICOLI! 🔥
 💥 SUPER PROMO IMPERDIBILE 💥
@@ -472,6 +475,7 @@
 ⚡ Più compri, più risparmi!
 🚀 Non perdere questa occasione!
 👉 Ordina subito dal nostro sito e approfitta degli sconti esclusivi!</p>
+          <div id="banner-discount-tag" style="display:none;margin-top:8px;"></div>
           <div class="banner-emoji">🛍️</div>
         </div>
       </div>
@@ -672,6 +676,12 @@
           </div>
         </div>
       </div>
+      <div class="profile-stats" id="profile-stats">
+        <div class="profile-stat"><div class="profile-stat-num" id="stat-total">0</div><div class="profile-stat-label">Tutti gli Ordini</div></div>
+        <div class="profile-stat"><div class="profile-stat-num" id="stat-pending">0</div><div class="profile-stat-label">In attesa</div></div>
+        <div class="profile-stat"><div class="profile-stat-num" id="stat-processing">0</div><div class="profile-stat-label">In preparazione</div></div>
+        <div class="profile-stat"><div class="profile-stat-num" id="stat-done">0</div><div class="profile-stat-label">Completati</div></div>
+      </div>
 
       <!-- 客户价格等级卡片 -->
       <div id="profile-price-card" style="display:none;margin:12px 12px 0;background:linear-gradient(135deg,#FF5A1F,#ff8c42);border-radius:12px;padding:14px 16px;color:#fff;box-shadow:0 4px 16px rgba(255,90,31,0.3);">
@@ -697,12 +707,6 @@
         <div style="padding:12px 16px;display:flex;flex-direction:column;gap:8px;" id="profile-biz-rows"></div>
       </div>
 
-      <div class="profile-stats" id="profile-stats">
-        <div class="profile-stat"><div class="profile-stat-num" id="stat-total">0</div><div class="profile-stat-label">Tutti gli Ordini</div></div>
-        <div class="profile-stat"><div class="profile-stat-num" id="stat-pending">0</div><div class="profile-stat-label">In attesa</div></div>
-        <div class="profile-stat"><div class="profile-stat-num" id="stat-processing">0</div><div class="profile-stat-label">In preparazione</div></div>
-        <div class="profile-stat"><div class="profile-stat-num" id="stat-done">0</div><div class="profile-stat-label">Completati</div></div>
-      </div>
       <div style="height:16px;"></div>
       <div class="profile-section">
         <div class="profile-menu-item" onclick="App.showPage('page-address')">
@@ -714,14 +718,14 @@
         <div class="profile-menu-item" onclick="App.showEditProfile()">
           <span class="menu-icon">✏️</span><span class="menu-label">Modifica Profilo</span><span class="menu-arrow">›</span>
         </div>
-        <div class="profile-menu-item" onclick="App.doLogout()">
-          <span class="menu-icon">🚪</span><span class="menu-label">Esci (Logout)</span><span class="menu-arrow">›</span>
-        </div>
         <div class="profile-menu-item" onclick="App.showToast('Funzione in sviluppo…')">
           <span class="menu-icon">📞</span><span class="menu-label">Contatta il Servizio Clienti</span><span class="menu-arrow">›</span>
         </div>
         <div class="profile-menu-item" onclick="App.showToast('Funzione in sviluppo…')">
           <span class="menu-icon">⚙️</span><span class="menu-label">Impostazioni</span><span class="menu-arrow">›</span>
+        </div>
+        <div class="profile-menu-item" onclick="App.doLogout()">
+          <span class="menu-icon">🚪</span><span class="menu-label">Esci (Logout)</span><span class="menu-arrow">›</span>
         </div>
         <div class="profile-menu-item" onclick="App.clearAllData()" style="color:#e53e3e;">
           <span class="menu-icon">🗑️</span><span class="menu-label" style="color:#e53e3e;">Cancella Tutti i Dati</span><span class="menu-arrow" style="color:#e53e3e;">›</span>
@@ -748,28 +752,10 @@
     </div>
     <div class="page-body" style="padding:16px;display:flex;flex-direction:column;gap:14px;">
 
-      <!-- 输入区 -->
-      <div style="background:var(--white);border-radius:12px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
-        <div style="font-size:13px;color:var(--text-2);margin-bottom:10px;">📷 Punta il lettore di codici a barre o inserisci manualmente il codice prodotto:</div>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <input type="text" id="scan-input"
-            placeholder="Scansiona o inserisci codice a barre…"
-            style="flex:1;border:1.5px solid var(--border);border-radius:8px;padding:10px 14px;font-size:16px;color:var(--text);outline:none;background:#fafafa;"
-            onfocus="this.style.borderColor='var(--primary)'"
-            onblur="this.style.borderColor='var(--border)'"
-            onkeydown="if(event.key==='Enter')App.scanAdd()">
-          <button onclick="App.scanAdd()"
-            style="padding:10px 18px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;white-space:nowrap;">
-            Aggiungi
-          </button>
-        </div>
-        <div style="font-size:11px;color:var(--text-3);margin-top:8px;">Lo scanner aggiunge automaticamente, non è necessario cliccare il pulsante</div>
-      </div>
-
-      <!-- 摄像头扫码 -->
+      <!-- 摄像头预览区 -->
       <div style="background:var(--white);border-radius:12px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
         <div id="scan-reader" style="width:100%;aspect-ratio:4/3;background:#000;border-radius:8px;overflow:hidden;display:none;position:relative;"></div>
-        <style>#scan-reader video{width:100%!important;height:100%!important;object-fit:contain!important;display:block!important;} #scan-reader__dashboard_section_csr button{font-size:12px!important;}</style>
+        <style>#scan-reader video{width:100%!important;height:100%!important;object-fit:contain!important;display:block!important;}</style>
         <div id="scan-placeholder" style="width:100%;aspect-ratio:4/3;background:linear-gradient(135deg,#f5f5f5 0%,#e8e8e8 100%);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--text-3);font-size:13px;">
           Tocca "Avvia Camera" per scansionare
         </div>
@@ -782,13 +768,31 @@
         </div>
       </div>
 
+      <!-- 输入区 -->
+      <div style="background:var(--white);border-radius:12px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
+        <div style="font-size:13px;color:var(--text-2);margin-bottom:10px;">🔢 Oppure inserisci manualmente il codice prodotto:</div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input type="text" id="scan-input"
+            placeholder="Inserisci codice a barre…"
+            style="flex:1;border:1.5px solid var(--border);border-radius:8px;padding:10px 14px;font-size:16px;color:var(--text);outline:none;background:#fafafa;"
+            onfocus="this.style.borderColor='var(--primary)'"
+            onblur="this.style.borderColor='var(--border)'"
+            onkeydown="if(event.key==='Enter')App.scanAdd()">
+          <button onclick="App.scanAdd()"
+            style="padding:10px 18px;background:var(--primary);color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;white-space:nowrap;">
+            Aggiungi
+          </button>
+        </div>
+        <div style="font-size:11px;color:var(--text-3);margin-top:8px;">Oppure usa il lettore di codici a barre esterno</div>
+      </div>
+
       <!-- Registro Scansioni -->
       <div style="background:var(--white);border-radius:12px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
           <span style="font-size:14px;font-weight:600;color:var(--text);">Registro Scansioni</span>
           <span onclick="App.scanClearLog()" style="font-size:12px;color:var(--text-3);cursor:pointer;">Cancella Registro</span>
         </div>
-        <div id="scan-log" style="display:flex;flex-direction:column;gap:8px;">
+        <div id="scan-log" style="display:flex;flex-direction:column;gap:8px;max-height:300px;overflow-y:auto;">
           <div style="text-align:center;color:var(--text-3);font-size:13px;padding:20px 0;">Nessun registro, inizia a scansionare～</div>
         </div>
       </div>
@@ -896,7 +900,6 @@
       <div class="form-item"><div class="form-label">Nome</div><input class="form-input" id="addr-name" placeholder="Inserisci nome del destinatario"></div>
       <div class="form-item"><div class="form-label">Telefono</div><input class="form-input" id="addr-phone" placeholder="Inserisci numero di telefono" type="tel"></div>
     </div>
-    <div class="form-item"><div class="form-label">Provincia/Città/Zona</div><input class="form-input" id="addr-region" placeholder="Es: Milano, MI, Lombardia"></div>
     <div class="form-item"><div class="form-label">Indirizzo Dettagliato</div><input class="form-input" id="addr-detail" placeholder="Via, numero civico, ecc."></div>
     <button class="form-submit" onclick="App.saveAddress()">Salva Indirizzo</button>
   </div>
@@ -939,9 +942,31 @@ const CATEGORIES = [
 
 let GOODS_DATA = [];
 
+// ==================== 全局步进器函数 ====================
+function _sp(gId){
+  var qty = window._qty ? window._qty(gId) : 0;
+  var disabled = qty===0 ? 'style="opacity:0.3;pointer-events:none;"' : '';
+  return '<div style="display:inline-flex;align-items:center;background:var(--bg);border-radius:20px;padding:2px 4px;gap:0;">'
+    + '<button onclick="event.stopPropagation();window._chg(\''+gId+'\',-1)" '+disabled+'>−</button>'
+    + '<span style="min-width:28px;text-align:center;font-size:13px;font-weight:600;color:var(--text);">'+qty+'</span>'
+    + '<button onclick="event.stopPropagation();window._chg(\''+gId+'\',1)">+</button>'
+    + '</div>';
+}
+function _ref(){
+  document.querySelectorAll('[data-sid]').forEach(function(el){
+    var sid=el.getAttribute('data-sid');
+    var html=_sp(sid);
+    var old=el.querySelector('.sp-wrap');
+    if(old) old.outerHTML=html; else {
+      var btn=el.querySelector('button');
+      if(btn){var d=document.createElement('div');d.className='sp-wrap';d.innerHTML=html;btn.parentNode.insertBefore(d,btn.nextSibling);}
+    }
+  });
+}
+
 // 从外部JSON文件加载商品数据
 // 注意：file:// 协议下 fetch 会被浏览器 CORS 拦截，需通过本地服务器 http://localhost 访问
-fetch('goods.json')
+fetch('goods.json?t=' + Date.now())
     .then(res => res.json())
     .then(data => {
         GOODS_DATA = data;
@@ -988,15 +1013,6 @@ const App = (function(){
     try { state.cartItems = JSON.parse(localStorage.getItem('yg_cart')||'[]'); } catch(e){}
     try { state.orders = JSON.parse(localStorage.getItem('yg_orders')||'[]'); } catch(e){}
     try { state.addresses = JSON.parse(localStorage.getItem('yg_addresses')||'[]'); } catch(e){}
-    // 内置公司地址：存储为空时自动预置，下单无需手动输入（可随时在"地址管理"页修改/删除）
-    if(!Array.isArray(state.addresses)) state.addresses = [];
-    if(state.addresses.length===0){
-      state.addresses = [
-        { name:'ECO SHOP DI QIU SHUANGJING', phone:'3299727594', region:'71011 Apricena (FG)', detail:'Via Luigi Galasso 57/D', isDefault:true },
-        { name:'Z.&S. S.R.L', phone:'3289297603', region:'76121 Barletta (BT)', detail:'Via Trani 29', isDefault:false }
-      ];
-      localStorage.setItem('yg_addresses', JSON.stringify(state.addresses));
-    }
     try { state.profile = JSON.parse(localStorage.getItem('yg_profile')||'{}'); state.profile = Object.assign({name:'',phone:''},state.profile); } catch(e){}
   }
 
@@ -1008,75 +1024,14 @@ const App = (function(){
   }
   function $(id){ return document.getElementById(id); }
   function formatPrice(n){
-    // 应用客户折扣（discount 为百分比，如 20 = 打8折）；无折扣或数据缺失时显示原价
+    // 应用客户折扣（折扣 = discount%，如 20 = 打8折）
     var p = n;
-    try {
-      if(window.CURRENT_USER && window.CURRENT_USER.discount > 0 && window.CURRENT_USER.discount < 100){
-        p = n * (1 - window.CURRENT_USER.discount / 100);
-      }
-    } catch(e){}
+    if(window.CURRENT_USER && window.CURRENT_USER.discount > 0 && window.CURRENT_USER.discount < 100){
+      p = n * (1 - window.CURRENT_USER.discount / 100);
+    }
     return '€' + p.toFixed(2);
   }
-  // 原始价格（永不打折，用于划线显示等场景）
-  function formatBasePrice(n){ return '€' + n.toFixed(2); }
-
-  // ==================== 全局步进器函数 ====================
-  // _qty(gId): 返回该商品在购物车里的总数量（所有规格的 qty 之和）
-  function _qty(gId){
-    let total = 0;
-    state.cartItems.forEach(function(i){
-      if(String(i.goodId) === String(gId)) total += i.qty;
-    });
-    return total;
-  }
-  // _chg(gId, delta): +/- 步进器增减（+1 入默认规格 line；-1 减到 0 则删除整行）
-  function _chg(gId, delta){
-    const g = GOODS_DATA.find(function(x){ return String(x.id) === String(gId); });
-    if(!g) return;
-    const spec = (g.specs && g.specs[0]) ? g.specs[0] : (g.spec || '');
-    const key  = cartKey(gId, spec);
-    let line = state.cartItems.find(function(i){ return i.key === key; });
-    if(delta > 0){
-      if(line){ line.qty += 1; }
-      else { state.cartItems.push({key:key, goodId:gId, spec:spec, qty:1, checked:true}); }
-      showToast('+1 cartone aggiunto al carrello');
-    } else {
-      if(!line) return;
-      line.qty -= 1;
-      if(line.qty < 1){
-        const idx = state.cartItems.findIndex(function(i){ return i.key === key; });
-        if(idx >= 0) state.cartItems.splice(idx, 1);
-      }
-    }
-    save();
-    updateCartBadge();
-    _ref();
-    renderCart();
-  }
-  // _sp(gId): 渲染单个步进器 HTML（用于卡片内嵌）
-  function _sp(gId){
-    const qty = _qty(gId);
-    const minusDisabled = qty === 0 ? 'style="opacity:0.3;pointer-events:none;"' : '';
-    return '<div class="stepper" data-stepper-for="' + gId + '">'
-      + '<button class="stepper-btn minus" onclick="event.stopPropagation();App._chg(\'' + gId + '\',-1)" ' + minusDisabled + '>−</button>'
-      + '<span class="stepper-num">' + qty + '</span>'
-      + '<button class="stepper-btn plus" onclick="event.stopPropagation();App._chg(\'' + gId + '\',1)">+</button>'
-      + '</div>';
-  }
-  // _ref(): 刷新页面上所有 [data-stepper-for] 步进器数字与 minus 按钮状态
-  function _ref(){
-    document.querySelectorAll('[data-stepper-for]').forEach(function(el){
-      const gId = el.getAttribute('data-stepper-for');
-      const qty = _qty(gId);
-      const numEl = el.querySelector('.stepper-num');
-      if(numEl) numEl.textContent = qty;
-      const minusBtn = el.querySelector('.stepper-btn.minus');
-      if(minusBtn){
-        if(qty === 0) { minusBtn.style.opacity = '0.3'; minusBtn.style.pointerEvents = 'none'; }
-        else { minusBtn.style.opacity = ''; minusBtn.style.pointerEvents = ''; }
-      }
-    });
-  }
+  function formatBasePrice(n){ return '€' + n.toFixed(2); } // 原始价格（不打折）
 
   // ==================== 搜索功能 ====================
   let _searchTimer = null;
@@ -1191,10 +1146,10 @@ const App = (function(){
     showResults.forEach(function(g){
       const imgUrl = getImgUrl(g);
       const emoji = g.emoji || '📦';
-      html += '<div onclick="App.openDetail(\'' + g.id + '\')"'
+      html += '<div data-sid="' + g.id + '" onclick="App.openDetail(\'' + g.id + '\')"'
         + ' style="display:flex;align-items:center;gap:10px;background:var(--white);padding:9px 14px;border-bottom:1px solid var(--border);cursor:pointer;">'
         + '<div style="width:48px;height:48px;border-radius:8px;overflow:hidden;flex-shrink:0;background:#f5f5f5;position:relative;">'
-        + '<img src="' + imgUrl + '" alt="' + g.name + '" style="width:100%;height:100%;object-fit:contain;" onerror="this.onerror=null;this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">'
+        + '<img src="' + imgUrl + '" alt="' + g.name + '" style="width:100%;height:100%;object-fit:contain;" onerror="tryAlternateExt(this, \'' + g.id + '\')">'
         + '<span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:20px;position:absolute;top:0;left:0;">' + emoji + '</span>'
         + '</div>'
         + '<div style="flex:1;min-width:0;">'
@@ -1203,7 +1158,7 @@ const App = (function(){
         + '</div>'
         + '<div style="text-align:right;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:6px;">'
         + '<div style="font-size:15px;font-weight:700;color:var(--primary);">' + formatPrice(g.price) + '<span style="font-size:11px;font-weight:400;color:var(--text-3);">/' + g.unit + '</span></div>'
-        + App._sp(g.id)
+        + _sp(g.id)
         + '</div>'
         + '</div>';
     });
@@ -1267,7 +1222,7 @@ const App = (function(){
       html2 += '<div onclick="App.openDetail(\'' + g.id + '\')"'
         + ' style="display:flex;align-items:center;gap:10px;background:var(--white);padding:9px 14px;border-bottom:1px solid var(--border);cursor:pointer;">'
         + '<div style="width:48px;height:48px;border-radius:8px;overflow:hidden;flex-shrink:0;background:#f5f5f5;position:relative;">'
-        + '<img src="' + imgUrl2 + '" alt="' + g.name + '" style="width:100%;height:100%;object-fit:contain;" onerror="this.onerror=null;this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">'
+        + '<img src="' + imgUrl2 + '" alt="' + g.name + '" style="width:100%;height:100%;object-fit:contain;" onerror="tryAlternateExt(this, \'' + g.id + '\')">'
         + '<span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:20px;position:absolute;top:0;left:0;">' + emoji2 + '</span>'
         + '</div>'
         + '<div style="flex:1;min-width:0;">'
@@ -1276,7 +1231,7 @@ const App = (function(){
         + '</div>'
         + '<div style="text-align:right;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:6px;">'
         + '<div style="font-size:15px;font-weight:700;color:var(--primary);">' + formatPrice(g.price) + '<span style="font-size:11px;font-weight:400;color:var(--text-3);">/' + g.unit + '</span></div>'
-        + App._sp(g.id)
+        + _sp(g.id)
         + '</div>'
         + '</div>';
     });
@@ -5796,56 +5751,21 @@ const B2_IMG_MAP = {
 };
 // -----------------------------
 
-// ==================== 图片版本号缓存 ====================
-// versions.json 文件存在时使用其中的版本号做 cache busting（如 {"8433295062828": 3}）
-// 不存在或加载失败时所有图片 fallback 到 v=1（行为与改造前完全一致）
-let IMG_VERSION_MAP = {};
-
-function getImgUrl(g){
-    var baseUrl = '';
-    // 优先使用 B2 图片映射
-    if(g.id && B2_IMG_MAP[String(g.id)]) {
-      baseUrl = 'https://f003.backblazeb2.com/file/ECOSHOP/' + B2_IMG_MAP[String(g.id)];
+  const R2_BASE = 'https://old-boat-9019.zongweihai199.workers.dev/';
+  function getImgUrl(g){
+    if(g.id) {
+      return R2_BASE + g.id + '.jpg';
     }
-    // 次选：直接用商品ID构造B2 URL（覆盖大部分情况）
-    else if(g.id) {
-      baseUrl = 'https://f003.backblazeb2.com/file/ECOSHOP/' + String(g.id) + '.jpg';
+    return '';
+  }
+  
+  // 图片加载失败时直接显示emoji（R2只有.jpg，无需尝试其他后缀）
+  window.tryAlternateExt = function(img, id) {
+    img.style.display = 'none';
+    if(img.nextElementSibling && img.nextElementSibling.tagName === 'SPAN') {
+      img.nextElementSibling.style.display = 'flex';
     }
-    if(!baseUrl) return '';
-    var ver = (g.id && IMG_VERSION_MAP[String(g.id)]) || 1;
-    return baseUrl + '?v=' + ver;
-  }
-
-  // 启动时异步加载 versions.json（不阻塞主流程）
-  function loadImgVersions(){
-    fetch('versions.json?t=' + Date.now())
-      .then(function(r){ if(!r.ok) throw new Error('versions.json status '+r.status); return r.json(); })
-      .then(function(raw){
-        var map = {};
-        for(const [k,v] of Object.entries(raw)){
-          map[String(k)] = typeof v === 'object' ? v.ver : v;
-        }
-        IMG_VERSION_MAP = map;
-        console.log('图片版本号加载完成，共 ' + Object.keys(map).length + ' 条');
-        // 刷新已显示的图片（让已经渲染的卡片也带上版本号，避免下次回退到缓存）
-        _refreshImgVersions();
-      })
-      .catch(function(e){ console.warn('versions.json 未加载，使用默认 v=1：', e && e.message || e); });
-  }
-
-  // 遍历页面所有 B2 图片，根据 IMG_VERSION_MAP 重设 src
-  function _refreshImgVersions(){
-    document.querySelectorAll('img[src*="backblazeb2.com"]').forEach(function(img){
-      try {
-        var u = new URL(img.src, location.href);
-        var fname = u.pathname.split('/').pop() || '';
-        var id = fname.replace(/\.[^.]+$/, ''); // 去掉 .jpg 后缀
-        var v = (IMG_VERSION_MAP && IMG_VERSION_MAP[id]) || 1;
-        u.searchParams.set('v', v);
-        img.src = u.toString();
-      } catch(e){}
-    });
-  }
+  };
 
   // 生成商品图片HTML：<img> + onerror回退emoji
   function goodsImgHtml(g, cls='goods-img', extraStyle=''){
@@ -5854,7 +5774,7 @@ function getImgUrl(g){
     return `<div class="${cls}" style="position:relative;overflow:hidden;${extraStyle}">
       <img src="${url}" alt="${g.name}"
         style="width:100%;height:100%;object-fit:contain;position:absolute;top:0;left:0;"
-        onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='flex'">
+        onerror="tryAlternateExt(this, '${g.id || ''}')">
       <span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:inherit;position:absolute;top:0;left:0;">${fallback}</span>
     </div>`;
   }
@@ -5893,6 +5813,10 @@ function getImgUrl(g){
       startOrderAutoRefresh();
     } else {
       stopOrderAutoRefresh();
+    }
+    // 离开扫描页时停止摄像头
+    if(pageId !== 'page-scan' && _camRunning){
+      stopCamera();
     }
     // 同步 history，让手机系统后退键能触发 popstate
     if(pushStack){
@@ -5958,14 +5882,14 @@ function getImgUrl(g){
     if(!grid) return;
     const slice = _pageList.slice(_pageOffset, _pageOffset + PAGE_SIZE);
     grid.insertAdjacentHTML('beforeend', slice.map(g=>`
-      <div class="goods-card" onclick="App.openDetail('${g.id}')">
+      <div class="goods-card" data-gid="${g.id}" onclick="App.openDetail('${g.id}')">
         ${goodsImgHtml(g,'goods-img')}
         <div class="goods-info">
           <div class="goods-name">${g.name}</div>
           <div class="goods-id">Codice: ${g.id}</div>
           <div class="goods-bottom">
-            <div class="goods-price">${formatPrice(g.price)}<span>/${g.unit}${g.spec ? ' · '+g.spec : ''}</span></div>
-            ${App._sp(g.id)}
+            <div class="goods-price">${formatPrice(g.price)}${g.spec ? ' <span style="font-size:11px;color:var(--text-3);">'+g.spec+'</span>' : ''}</div>
+            ${_sp(g.id)}
           </div>
         </div>
       </div>`).join(''));
@@ -6091,8 +6015,12 @@ function getImgUrl(g){
     if(existing){ existing.qty+=1; }
     else { state.cartItems.push({key,goodId:g.id,spec,qty:1,checked:true}); }
     save(); updateCartBadge(); showToast('Aggiunto al carrello 🛒');
-    _ref();
   }
+  function _qty(gId){var g=GOODS_DATA.find(function(x){return String(x.id)===String(gId);});if(!g)return 0;var sp=(g.specs&&g.specs[0])||g.spec||'';var it=state.cartItems.find(function(i){return i.key===gId+'__'+sp;});return it?it.qty:0;}
+  function _chg(gId,delta){var g=GOODS_DATA.find(function(x){return String(x.id)===String(gId);});if(!g)return;var sp=(g.specs&&g.specs[0])||g.spec||'';var key=gId+'__'+sp;var ix=state.cartItems.findIndex(function(i){return i.key===key;});if(ix<0){if(delta>0){state.cartItems.push({key:key,goodId:gId,spec:sp,qty:delta,checked:true});save();updateCartBadge();_ref(gId);}return;}var it=state.cartItems[ix];var n=Math.max(0,it.qty+delta);if(n===0)state.cartItems.splice(ix,1);else it.qty=n;save();updateCartBadge();_ref(gId);}
+  window._chg=_chg;window._qty=_qty;window._ref=_ref;
+  function _sp(gId){var q=_qty(gId);return'<div class="stepper"><button class="stepper-btn minus" style="visibility:'+(q>0?'visible':'hidden')+'" onclick="event.stopPropagation();_chg(\''+gId+'\',-1)">-</button><span class="stepper-num">'+q+'</span><button class="stepper-btn plus" onclick="event.stopPropagation();_chg(\''+gId+'\',1)">+</button></div>';}
+  function _ref(gId){document.querySelectorAll('[data-gid]').forEach(function(el){if(el.getAttribute('data-gid')!==String(gId))return;var sp=el.querySelector('.stepper');if(!sp)return;var q=_qty(gId);var mn=sp.querySelector('.minus');var nm=sp.querySelector('.stepper-num');if(nm)nm.textContent=q;if(mn)mn.style.visibility=q>0?'visible':'hidden';});document.querySelectorAll('[data-sid]').forEach(function(el){if(el.getAttribute('data-sid')!==String(gId))return;var sp=el.querySelector('.stepper');if(!sp)return;var q=_qty(gId);var mn=sp.querySelector('.minus');var nm=sp.querySelector('.stepper-num');if(nm)nm.textContent=q;if(mn)mn.style.visibility=q>0?'visible':'hidden';});}
   function quickAddCart(goodId){
     const g=GOODS_DATA.find(x=>String(x.id)===String(goodId));
     if(!g) return;
@@ -6102,34 +6030,27 @@ function getImgUrl(g){
     // 每次加1箱
     if(existing){ existing.qty+=1; }
     else { state.cartItems.push({key,goodId:g.id,spec,qty:1,checked:true}); }
-    save(); updateCartBadge(); showToast('+1 cartone aggiunto al carrello');
-    _ref();
+    save(); updateCartBadge(); _ref(goodId);
   }
-  function buyNow() {
+function buyNow() {
     // 只有当Carrello里没有当前选中的商品时，才执行加购
     const g = state.currentGood, spec = state.currentSpec;
     const key = cartKey(g.id, spec);
     const existing = state.cartItems.find(i => i.key === key);
-
+    
     if (!existing) {
         addToCart(1);
     }
-    _ref();
     switchTab('cart');
-  }
+}
   // ==================== Scansiona功能 ====================
   // Scansiona记录（仅本次会话内保留，切换页面不Svuota）
   var _scanLog = [];
 
-  function scanAdd(code){
+  function scanAdd(){
     const input = $('scan-input');
-    // 如果外部传入 code（摄像头扫码），直接使用；否则从 input 读
-    if(code === undefined || code === null){
-      if(!input) return;
-      code = input.value.trim();
-    } else {
-      code = String(code).trim();
-    }
+    if(!input) return;
+    const code = input.value.trim();
     if(!code){ showToast('Inserisci o scansiona il codice a barre'); return; }
 
     // 在商品库里查找
@@ -6168,74 +6089,152 @@ function getImgUrl(g){
     } else {
       showToast('⚠️ Codice ' + code + ' non nel database prodotti, aggiunto al carrello');
     }
-    _ref();
   }
 
-  // ==================== 摄像头扫码 (html5-qrcode) ====================
-  // 切换摄像头：启动/停止扫描
+  // ==================== 摄像头扫码 ====================
+  var _html5Qr = null;
+  var _camRunning = false;
+  var _lastScanCode = '';
+  var _lastScanTime = 0;
+  var _scanCooldown = 2000; // 2秒防重扫间隔
+
   function toggleCamera(){
-    const btn = $('scan-cam-btn');
+    if(_camRunning){
+      stopCamera();
+    } else {
+      startCamera();
+    }
+  }
+
+  function startCamera(){
     const reader = $('scan-reader');
     const placeholder = $('scan-placeholder');
-    if(!btn || !reader || !placeholder) return;
+    const btn = $('scan-cam-btn');
+    if(!reader || !placeholder || !btn) return;
 
-    if(btn.dataset.active === '1'){
-      // 关闭摄像头
-      if(window._html5Scanner){
-        try {
-          window._html5Scanner.stop().then(function(){
-            try { window._html5Scanner.clear(); } catch(e){}
-          }).catch(function(){});
-        } catch(e){}
-        window._html5Scanner = null;
-      }
-      reader.style.display = 'none';
-      placeholder.style.display = 'flex';
-      btn.textContent = 'Avvia Camera';
-      btn.style.background = 'var(--primary)';
-      btn.dataset.active = '0';
-      return;
-    }
+    _html5Qr = new Html5Qrcode("scan-reader");
 
-    // 启动摄像头
-    if(typeof Html5Qrcode === 'undefined'){
-      showToast('Libreria fotocamera non ancora caricata');
-      return;
-    }
-    placeholder.style.display = 'none';
-    reader.style.display = 'block';
-    btn.textContent = 'Chiudi Camera';
-    btn.style.background = '#888';
-    btn.dataset.active = '1';
+    const config = {
+      fps: 15,
+      qrbox: { width: 450, height: 280 },
+      formatsToSupport: [
+        Html5QrcodeSupportedFormats.EAN_13,
+        Html5QrcodeSupportedFormats.EAN_8,
+        Html5QrcodeSupportedFormats.UPC_A,
+        Html5QrcodeSupportedFormats.UPC_E,
+        Html5QrcodeSupportedFormats.CODE_128,
+        Html5QrcodeSupportedFormats.CODE_39,
+        Html5QrcodeSupportedFormats.CODE_93,
+        Html5QrcodeSupportedFormats.CODABAR,
+        Html5QrcodeSupportedFormats.ITF,
+        Html5QrcodeSupportedFormats.QR_CODE
+      ]
+    };
 
-    if(!window._html5Scanner){
-      window._html5Scanner = new Html5Qrcode('scan-reader');
-    }
-    window._html5Scanner.start(
-      { facingMode: 'environment' },
-      { fps: 10, qrbox: { width: 260, height: 160 } },
+    _html5Qr.start(
+      { facingMode: "environment" },
+      config,
       function(decodedText){
-        // 扫码成功 → 加入购物车（自动停止摄像头避免重复扫码）
+        var now = Date.now();
+        // 防重复扫码：相同条码且在冷却期内
+        if(decodedText === _lastScanCode && now - _lastScanTime < _scanCooldown){
+          return;
+        }
+        _lastScanCode = decodedText;
+        _lastScanTime = now;
+
+        // 震动反馈
+        if(navigator.vibrate) navigator.vibrate(100);
+
+        // 短促嘀声
+        try{
+          var ctx = new (window.AudioContext || window.webkitAudioContext)();
+          var osc = ctx.createOscillator();
+          var gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.frequency.value = 2000;
+          osc.type = 'sine';
+          gain.gain.value = 0.4;
+          osc.start();
+          osc.stop(ctx.currentTime + 0.08);
+        }catch(e){}
+
+        _html5Qr.pause(true);
         handleScannedCode(decodedText);
-        // 短暂震动反馈后关闭摄像头
-        try { if(navigator.vibrate) navigator.vibrate(80); } catch(e){}
         setTimeout(function(){
-          if(btn.dataset.active === '1') toggleCamera();
-        }, 600);
+          if(_camRunning) _html5Qr.resume();
+        }, 1000);
       },
-      function(){}
-    ).catch(function(err){
-      showToast('Impossibile avviare fotocamera: ' + (err && err.message ? err.message : err));
-      reader.style.display = 'none';
-      placeholder.style.display = 'flex';
-      btn.textContent = 'Avvia Camera';
-      btn.style.background = 'var(--primary)';
-      btn.dataset.active = '0';
+      function(error){}
+    ).then(function(){
+      _camRunning = true;
+      reader.style.display = 'block';
+      placeholder.style.display = 'none';
+      btn.textContent = 'Ferma Camera';
+      btn.style.background = '#666';
+      // 手动设置video元素样式，放大画面
+      setTimeout(function(){
+        var video = reader.querySelector('video');
+        if(video){
+          video.style.width = '100%';
+          video.style.height = '100%';
+          video.style.objectFit = 'none';
+          video.style.zoom = '2';
+          video.style.display = 'block';
+        }
+      }, 100);
+    }).catch(function(err){
+      console.error('Camera start error:', err);
+      showToast('Errore avvio camera');
     });
   }
-  // 摄像头扫码回调：把扫到的 code 直接送入 scanAdd
+
+  function stopCamera(){
+    if(_html5Qr){
+      _html5Qr.stop().then(function(){
+        _camRunning = false;
+        const reader = $('scan-reader');
+        const placeholder = $('scan-placeholder');
+        const btn = $('scan-cam-btn');
+        if(reader) reader.style.display = 'none';
+        if(placeholder) placeholder.style.display = 'flex';
+        if(btn){ btn.textContent = 'Avvia Camera'; btn.style.background = 'var(--primary)'; }
+      }).catch(function(err){
+        console.error('Stop camera error:', err);
+      });
+    }
+  }
+
   function handleScannedCode(code){
-    scanAdd(code);
+    // 复用 scanAdd 的逻辑，但不清空输入框
+    const g = GOODS_DATA.find(function(x){ return String(x.id).toLowerCase() === code.toLowerCase(); });
+    const goodId = g ? String(g.id) : code;
+    const name   = g ? g.name  : 'Prodotto Sconosciuto';
+    const spec   = g ? ((g.specs && g.specs[0]) ? g.specs[0] : (g.spec||'')) : '';
+    const key    = cartKey(goodId, spec);
+    console.log('[扫码]', code, '找到:', !!g, 'key:', key);
+
+    const existing = state.cartItems.find(function(i){ return i.key === key; });
+    if(existing){
+      existing.qty += 1;
+    } else {
+      state.cartItems.push({ key: key, goodId: goodId, spec: spec, qty: 1, checked: true });
+    }
+    save();
+    updateCartBadge();
+    console.log('[购物车]', state.cartItems.length, '项');
+
+    // 记录到日志
+    const found = !!g;
+    _scanLog.unshift({ code: goodId, name: name, spec: spec, found: found, time: new Date().toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit',second:'2-digit'}) });
+    renderScanLog();
+
+    if(found){
+      showToast('✅ ' + name + ' aggiunto al Carrello');
+    } else {
+      showToast('⚠️ Codice ' + code + ' non nel database');
+    }
   }
 
   function renderScanLog(){
@@ -6280,10 +6279,12 @@ function getImgUrl(g){
   function clearCart(){
     if(state.cartItems.length===0){ showToast('Il carrello è già vuoto'); return; }
     state.cartItems=[];
-    save(); updateCartBadge(); renderCart(); _ref(); showToast('Carrello svuotato');
+    save(); updateCartBadge(); renderCart(); showToast('Carrello svuotato');
   }
   function renderCart(){
     const el=$('cart-content');
+    const listEl = el ? el.querySelector('.cart-list') : null;
+    const scrollTop = listEl ? listEl.scrollTop : 0;
     if(state.cartItems.length===0){
       el.innerHTML=`<div class="cart-empty"><div class="cart-empty-icon">🛒</div><div class="cart-empty-text">Il carrello è vuoto～</div><button class="cart-empty-btn" onclick="App.switchTab('home')">Vai allo Shopping</button></div>`;
       return;
@@ -6299,20 +6300,22 @@ function getImgUrl(g){
     el.innerHTML=`
       <div class="cart-list">${state.cartItems.map((item,idx)=>{
         const g=GOODS_DATA.find(x=>String(x.id)===String(item.goodId));
-        if(!g) return '';
+        // 未知条码：创建虚拟商品对象
+        const displayG = g || { id: item.goodId, name: '⚠️ ' + item.goodId, price: 0, specs: item.spec ? [item.spec] : [] };
         const specQty = getSpecQty(item.spec, item.goodId);  // SpecificheQuantità
         const actualQty = item.qty * specQty;  // 实际商品Quantità
+        const imgHtml = g ? goodsImgHtml(g,'cart-img') : '<div class="cart-img" style="width:56px;height:56px;background:#f0f0f0;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;">📷</div>';
         return `<div class="cart-item">
           <div class="cart-check ${item.checked?'checked':''}" onclick="App.toggleCartCheck(${idx})">${item.checked?'✓':''}</div>
-          ${goodsImgHtml(g,'cart-img')}
+          ${imgHtml}
           <div class="cart-info">
-            <div class="cart-name">${g.name}</div>
-            <div class="cart-spec-text">${item.spec}</div>
+            <div class="cart-name">${displayG.name}</div>
+            <div class="cart-spec-text">${item.spec || 'Codice sconosciuto'}</div>
             <div class="cart-row">
-              <div class="cart-price">${formatPrice(g.price*actualQty)}</div>
+              <div class="cart-price">${formatPrice(displayG.price*actualQty)}</div>
               <div class="cart-stepper">
                 <button class="cart-btn minus" onclick="App.changeCartQty(${idx},-1)">−</button>
-                <div class="cart-num">${item.qty} cartoni × ${specQty} = ${actualQty}</div>
+                <div class="cart-num">${item.qty} ct × ${specQty} = ${actualQty}</div>
                 <button class="cart-btn" onclick="App.changeCartQty(${idx},1)">+</button>
               </div>
             </div>
@@ -6332,6 +6335,11 @@ function getImgUrl(g){
         <button class="cart-submit" onclick="App.goCheckout()" ${checkedItems.length===0?'disabled':''}>Vai al Checkout</button>
       </div>
     `;
+    // innerHTML 后重新获取 .cart-list，保持滚动位置
+    setTimeout(function(){
+      const newListEl = el ? el.querySelector('.cart-list') : null;
+      if(newListEl) newListEl.scrollTop = scrollTop;
+    }, 10);
   }
   function toggleCartCheck(idx){
     state.cartItems[idx].checked=!state.cartItems[idx].checked;
@@ -6343,12 +6351,26 @@ function getImgUrl(g){
     save(); renderCart();
   }
   function changeCartQty(idx, delta){
+    const scrollEl = $('cart-content');
+    const listEl = scrollEl ? scrollEl.querySelector('.cart-list') : null;
+    const targetScrollTop = listEl ? listEl.scrollTop : 0;
     state.cartItems[idx].qty=Math.max(1,state.cartItems[idx].qty+delta);
-    save(); updateCartBadge(); renderCart(); _ref();
+    save(); updateCartBadge(); renderCart();
+    // 保持滚动位置
+    setTimeout(function(){
+      if(listEl) listEl.scrollTop = targetScrollTop;
+    }, 10);
   }
   function removeCartItem(idx){
+    const scrollEl = $('cart-content');
+    const listEl = scrollEl ? scrollEl.querySelector('.cart-list') : null;
+    const targetScrollTop = listEl ? listEl.scrollTop : 0;
     state.cartItems.splice(idx,1);
-    save(); updateCartBadge(); renderCart(); _ref();
+    save(); updateCartBadge(); renderCart();
+    // 保持滚动位置
+    setTimeout(function(){
+      if(listEl) listEl.scrollTop = targetScrollTop;
+    }, 10);
   }
 
   // ---------- 结算 ----------
@@ -6368,13 +6390,12 @@ function getImgUrl(g){
       const actualQty = i.qty * specQty;
       return s+(g?g.price*actualQty:0);
     },0);
-    // 客户折扣（discount 为百分比，如 20 = 打8折）
     const discountRate = (cu && cu.discount > 0 && cu.discount < 100) ? parseFloat(cu.discount) : 0;
     const subtotal = subtotalBase * (1 - discountRate / 100);
     const freight = 0;
     const total=subtotal+freight;
 
-    // 客户业务信息区块（有数据才显示）
+    // 客户业务信息区块
     let customerInfoHtml = '';
     if(cu && (cu.nome || cu.indirizzo || cu.piva)){
       const rows = [];
@@ -6394,7 +6415,6 @@ function getImgUrl(g){
       }
     }
 
-    // 折扣行（有折扣才显示）
     let discountRowHtml = '';
     if(discountRate > 0){
       const saved = subtotalBase - subtotal;
@@ -6409,20 +6429,24 @@ function getImgUrl(g){
       ${customerInfoHtml}
       <div class="checkout-section" style="margin:8px;border-radius:12px;overflow:hidden;">
         <div class="checkout-section-header"><span class="icon">📍</span><span class="label">Indirizzo di Spedizione</span></div>
-        ${defaultAddr?`<div class="address-card" onclick="App.showPage('page-address')">
-          <div class="address-name-row"><span class="address-name">${defaultAddr.name}</span><span class="address-phone">${defaultAddr.phone}</span></div>
-          <div class="address-detail">${defaultAddr.region} ${defaultAddr.detail}</div>
-        </div>`:`<div class="no-address" onclick="App.showAddAddress()"><span class="no-address-text">+ + Aggiungi Indirizzo</span><span>›</span></div>`}
+        ${(cu && (cu.nome || cu.telefono || cu.indirizzo)) ? `
+          <div class="address-card" style="pointer-events:none;">
+            <div class="address-name-row">
+              <span class="address-name">${cu.nome||'—'}</span>
+              <span class="address-phone">${cu.telefono||''}</span>
+            </div>
+            <div class="address-detail">${cu.indirizzo||''}</div>
+          </div>` : `<div class="no-address"><span class="no-address-text">⚠️ Informazioni indirizzo non disponibili</span></div>`}
       </div>
       <div class="checkout-section" style="margin:8px;border-radius:12px;overflow:hidden;">
         <div class="checkout-section-header"><span class="icon">📦</span><span class="label">Elenco Prodotti (${items.length} selezionati)</span></div>
         <div class="checkout-goods">${items.map(item=>{
           const g=GOODS_DATA.find(x=>String(x.id)===String(item.goodId));
           if(!g) return '';
-          const specQty = getSpecQty(item.spec, item.goodId);  // SpecificheQuantità
-          const actualQty = item.qty * specQty;  // 实际商品Quantità
-          const itemTotalBase = g.price * actualQty;  // 该商品原价总价
-          const itemTotal = itemTotalBase * (1 - discountRate / 100);  // 折后总价
+          const specQty = getSpecQty(item.spec, item.goodId);
+          const actualQty = item.qty * specQty;
+          const itemTotalBase = g.price * actualQty;
+          const itemTotal = itemTotalBase * (1 - discountRate / 100);
           return `<div class="checkout-goods-item">
             ${goodsImgHtml(g,'checkout-goods-img')}
             <div class="checkout-goods-info">
@@ -6463,8 +6487,12 @@ function getImgUrl(g){
     $('checkout-footer').dataset.items=JSON.stringify(items);
   }
   function submitOrder(){
-    const defaultAddr=state.addresses.find(a=>a.isDefault)||state.addresses[0];
-    if(!defaultAddr){ showToast('Aggiungi prima un indirizzo di spedizione'); return; }
+    const cu = window.CURRENT_USER;
+    const shippingAddr = {
+      name: cu ? (cu.nome || '') : '',
+      phone: cu ? (cu.telefono || '') : '',
+      detail: cu ? (cu.indirizzo || '') : ''
+    };
     const footer=$('checkout-footer');
     const total=parseFloat(footer.dataset.total);
     const items=JSON.parse(footer.dataset.items||'[]');
@@ -6475,7 +6503,7 @@ function getImgUrl(g){
       no:orderNo,
       time:orderTime,
       status:'pending',
-      address:defaultAddr,
+      address:shippingAddr,
       remark,
       total,
       items:items.map(i=>{
@@ -6706,7 +6734,7 @@ function getImgUrl(g){
               '<div class="order-goods-price-row">' + formatPrice(itemTotal) + ' × ' + item.qty + ' cartoni (' + actualQty + ')</div></div></div>';
           }).join('') + '</div>' +
           '<div class="order-card-body">' +
-            (o.address ? '<div class="order-addr">📍 ' + o.address.name + ' ' + o.address.phone + ' · ' + o.address.region + ' ' + o.address.detail + '</div>' : '') +
+            (o.address ? '<div class="order-addr">📍 ' + o.address.name + (o.address.phone?' · '+o.address.phone:'') + (o.address.detail?' · '+o.address.detail:'') + '</div>' : '') +
             (o.remark ? '<div style="font-size:12px;color:var(--text-3);margin-top:6px;">Note: ' + o.remark + '</div>' : '') +
             merchantNoteHtml + lastUpdateHtml +
             '<div style="font-size:12px;color:var(--text-3);margin-top:6px;">Data ordine: ' + o.time + '</div>' +
@@ -6742,7 +6770,7 @@ function getImgUrl(g){
       ['Stato Ordine', {pending:'In attesa',processing:'In preparazione',done:'Completati',cancelled:'Annullato'}[o.status]||o.status],
       ['Nome Cliente', addr.name||'—'],
       ['Telefono', addr.phone||'—'],
-      ['Indirizzo di Spedizione', (addr.province||'')+(addr.city||'')+(addr.district||'')+(addr.detail||'')],
+      ['Indirizzo di Spedizione', addr.detail||'—'],
       ['Note',     o.remark||'N/A'],
       [''],  // 空行分隔
       ['Codice Prodotto','Nome Prodotto','Specifiche','Prezzo Unitario','Quantità','Subtotale'],
@@ -6794,10 +6822,35 @@ function getImgUrl(g){
   }
 
   // ---------- 人中心 ----------
-  function renderProfile(){
-    // 基础信息：优先显示用户表里的公司名/电话，回退到本地 profile
+  function updateHomeBanner(){
     var cu = window.CURRENT_USER;
-    var displayName  = (cu && cu.nome)     ? cu.nome     : (state.profile.name||'Nome non impostato');
+    var tagEl = document.getElementById('banner-discount-tag');
+    if(!tagEl) return;
+    if(cu && cu.discount > 0 && cu.discount < 100){
+      tagEl.style.display = 'block';
+      tagEl.innerHTML = '<span style="display:inline-block;background:rgba(255,255,255,0.25);border-radius:4px;padding:3px 10px;font-size:12px;font-weight:600;">'
+        + '🏷️ Livello ' + (cu.priceLevel||'') + ' · Sconto ' + cu.discount + '% su tutti i prodotti'
+        + '</span>';
+      if(cu.nome){
+        var banner = document.getElementById('home-banner');
+        if(banner){
+          var h2 = banner.querySelector('h2');
+          if(h2) h2.textContent = 'Ciao, ' + cu.nome + '!';
+        }
+      }
+    } else if(cu && cu.nome) {
+      var banner2 = document.getElementById('home-banner');
+      if(banner2){
+        var h2b = banner2.querySelector('h2');
+        if(h2b) h2b.textContent = 'Ciao, ' + cu.nome + '!';
+      }
+    }
+  }
+
+  function renderProfile(){
+    // 基础信息
+    var cu = window.CURRENT_USER;
+    var displayName = (cu && cu.nome) ? cu.nome : (state.profile.name||'Nome non impostato');
     var displayPhone = (cu && cu.telefono) ? cu.telefono : (state.profile.phone||'Telefono non associato');
     $('profile-name').textContent = displayName;
     $('profile-phone').textContent = displayPhone;
@@ -6806,7 +6859,7 @@ function getImgUrl(g){
     $('stat-processing').textContent = state.orders.filter(o=>o.status==='processing').length;
     $('stat-done').textContent = state.orders.filter(o=>o.status==='done').length;
 
-    // 价格等级卡片（登录且有用户数据才显示）
+    // 价格等级卡片
     var priceCard = $('profile-price-card');
     var discountEl = $('profile-discount');
     var levelEl = $('profile-price-level');
@@ -6819,7 +6872,7 @@ function getImgUrl(g){
       }
     }
 
-    // 业务信息卡片（Dati Aziendali，任一字段有值才显示）
+    // 业务信息卡片
     var bizCard = $('profile-biz-card');
     var bizRows = $('profile-biz-rows');
     if(cu && bizCard && bizRows){
@@ -6847,6 +6900,12 @@ function getImgUrl(g){
       }
     }
   }
+  function doLogout(){
+    if(!confirm('Confermi il logout?')) return;
+    localStorage.removeItem(SESSION_KEY);
+    window.CURRENT_USER = null;
+    location.reload();
+  }
   function showEditProfile(){
     $('edit-name').value = state.profile.name||'';
     $('edit-phone').value = state.profile.phone||'';
@@ -6873,29 +6932,6 @@ function getImgUrl(g){
     showToast("✅ Tutti i dati sono stati cancellati, effettua nuovamente l'accesso");
     setTimeout(()=>{ location.reload(); }, 1500);
   }
-  function doLogout(){
-    if(!confirm('Conferma di voler uscire?')) return;
-    // 清除登录态（sessionStorage + localStorage 防止 7 天免登录恢复）+ 当前用户对象
-    sessionStorage.removeItem(SESSION_KEY);
-    try { localStorage.removeItem(SESSION_KEY); } catch(e){}
-    try { window.CURRENT_USER = null; CURRENT_USER = null; } catch(e){ window.CURRENT_USER = null; }
-    // 显示登录遮罩并清空表单
-    var overlay = document.getElementById('login-overlay');
-    if(overlay) overlay.classList.remove('hidden');
-    var uInput = document.getElementById('login-username');
-    var pInput = document.getElementById('login-password');
-    var errEl = document.getElementById('login-error');
-    if(uInput) uInput.value = '';
-    if(pInput) pInput.value = '';
-    if(errEl) errEl.textContent = '';
-    // 如果摄像头还在跑，顺手关闭
-    if(window._html5Scanner){
-      try { window._html5Scanner.stop().then(function(){ try{window._html5Scanner.clear();}catch(e){} }).catch(function(){}); } catch(e){}
-      window._html5Scanner = null;
-    }
-    // 保留购物车（按用户选择），只提示并显示登录遮罩
-    showToast('Disconnesso');
-  }
 
   // ---------- 地址 ----------
   function renderAddress(){
@@ -6910,7 +6946,7 @@ function getImgUrl(g){
           </div>
           ${!a.isDefault?`<span style="font-size:12px;color:var(--text-3);cursor:pointer;" onclick="App.setDefaultAddr(${idx})">Imposta come Predefinito</span>`:''}
         </div>
-        <div class="addr-detail-text">${a.region} ${a.detail}</div>
+        <div class="addr-detail-text">${a.detail}</div>
         <div class="addr-actions">
           <div class="addr-action-btn" onclick="App.editAddress(${idx})">✏️ Modifica</div>
           <div class="addr-action-btn del" onclick="App.deleteAddress(${idx})">🗑️ Elimina</div>
@@ -6923,7 +6959,7 @@ function getImgUrl(g){
       showPage('page-address');
     }
     renderAddress();
-    $('addr-name').value=''; $('addr-phone').value=''; $('addr-region').value=''; $('addr-detail').value='';
+    $('addr-name').value=''; $('addr-phone').value=''; $('addr-detail').value='';
     const modal=$('modal-address');
     const titleEl=modal.querySelector('.modal-title');
     if(titleEl){
@@ -6936,7 +6972,7 @@ function getImgUrl(g){
   function editAddress(idx){
     state.editAddrIdx=idx;
     const a=state.addresses[idx];
-    $('addr-name').value=a.name; $('addr-phone').value=a.phone; $('addr-region').value=a.region; $('addr-detail').value=a.detail;
+    $('addr-name').value=a.name; $('addr-phone').value=a.phone; $('addr-detail').value=a.detail;
     const modal=$('modal-address');
     const titleEl=modal.querySelector('.modal-title');
     if(titleEl){
@@ -6949,10 +6985,9 @@ function getImgUrl(g){
   function saveAddress(){
     const name=$('addr-name').value.trim();
     const phone=$('addr-phone').value.trim();
-    const region=$('addr-region').value.trim();
     const detail=$('addr-detail').value.trim();
-    if(!name||!phone||!region||!detail){ showToast('Compila tutti i campi'); return; }
-    const addr={name,phone,region,detail,isDefault:state.addresses.length===0};
+    if(!name||!phone||!detail){ showToast('Compila tutti i campi'); return; }
+    const addr={name,phone,detail,isDefault:state.addresses.length===0};
     if(state.editAddrIdx>=0){ addr.isDefault=state.addresses[state.editAddrIdx].isDefault; state.addresses[state.editAddrIdx]=addr; }
     else { state.addresses.push(addr); }
     save(); closeModal('modal-address'); renderAddress(); showToast('Indirizzo salvato');
@@ -6976,15 +7011,27 @@ function getImgUrl(g){
   // ---------- 初始化 ----------
   function init(){
     load();
+    // 恢复登录用户信息（7天内免登录）
+    try {
+      var raw = localStorage.getItem(window.SESSION_KEY || 'sc_login_user');
+      if(raw && !window.CURRENT_USER){
+        var obj = JSON.parse(raw);
+        if(obj && obj.exp && Date.now() < obj.exp && obj.user){
+          window.CURRENT_USER = obj.user;
+        } else {
+          localStorage.removeItem(window.SESSION_KEY || 'sc_login_user');
+        }
+      }
+    } catch(e){ localStorage.removeItem(window.SESSION_KEY || 'sc_login_user'); }
     // 商品数据统一从 goods.json 加载，不再使用 localStorage 缓存覆盖
     // 预加载本地图片列表（用于导入时自动匹配）
     loadAvailableImages();
-    // 异步加载图片版本号映射（不存在则使用默认 v=1）
-    loadImgVersions();
     // 渲染HomeCategoria+商品
     renderCatList('cat-list', state.currentCat, 'App.switchCat');
     renderGoodsPanel('goods-panel', state.currentCat);
     updateCartBadge();
+    // 更新Banner显示客户折扣等级
+    updateHomeBanner();
     // 页面加载时检查一次订单状态变化（如果有新消息会弹窗通知）
     if(GSHEET_URL && state.orders.length > 0) {
       setTimeout(function() {
@@ -7257,15 +7304,11 @@ function getImgUrl(g){
   function sendOrderToSheet(order){
     if(!GSHEET_URL) return;
     var addr = order.address || {};
-    var addrText = (addr.province||'') + (addr.city||'') + (addr.district||'') + (addr.detail||'');
+    var addrText = (addr.detail||'');
 
     // 构造结构化商品明细数组（强制转数字，防止price是字符串导致toFixed报错）
-    // 客户折扣：与 renderCheckout 一致，order.total 已是折后价，明细价格同步打折
-    var _cu = window.CURRENT_USER;
-    var _dRate = (_cu && _cu.discount > 0 && _cu.discount < 100) ? parseFloat(_cu.discount) : 0;
     var itemRows = (order.items || []).map(function(i){
       var price  = parseFloat(i.price)  || 0;
-      if(_dRate > 0) price = price * (1 - _dRate / 100);  // 折后单价
       var qty    = parseInt(i.qty)      || 0;
       var specQty = 1;
       try { specQty = getSpecQty(i.spec, i.goodId); } catch(e) { console.warn('[GSheet] getSpecQty error:', e); }
@@ -7320,13 +7363,12 @@ function getImgUrl(g){
     openDetail,selectSpec,changeQty,
     onSearchInput,onSearchFocus,clearSearch,
     toggleCatSearch,onCatSearchInput,clearCatSearch,
-    scanAdd,scanClearLog,
+    scanAdd,scanClearLog,toggleCamera,
     addToCart,quickAddCart,buyNow,
     clearCart,renderCart,toggleCartCheck,toggleCheckAll,changeCartQty,removeCartItem,
-    _sp,_chg,_qty,_ref,
     goCheckout,submitOrder,
     renderOrders,switchOrderTab,cancelOrder,reorder,exportOrderExcel,refreshSheetOrders,
-    renderProfile,showEditProfile,saveProfile,clearAllData,doLogout,
+    renderProfile,showEditProfile,saveProfile,clearAllData,doLogout,updateHomeBanner,
     showAddAddress,editAddress,saveAddress,deleteAddress,setDefaultAddr,renderAddress,
     closeModal,showToast,
     renderGoodsStats,handleFileDrop,handleFileSelect,confirmImport,exportGoods,
@@ -7337,17 +7379,20 @@ function getImgUrl(g){
 
 // =====================================================
 // 登录验证（直接读取 Google Sheets Account表 CSV）
-// 表格结构：用户(A)、Password(B)、Nome(C)、状态(D)
+// 表格结构（13列）：
+//   用户(A) 密码(B) 姓名(C) 状态(D) Nome(E) Indirizzo(F)
+//   P.IVA(G) COD.(H) CODICE FISCALE(I) EMAIL(J) Telefono(K)
+//   priceLevel(L) discount(M)
 // =====================================================
 var LOGIN_SHEET_CSV = 'https://docs.google.com/spreadsheets/d/1dsebhgSvzq7ebVTBR_cN1aAhbynjqBiW_6wHr7I-s_M/gviz/tq?tqx=out:csv&gid=0';
 var SESSION_KEY = 'sc_login_user';
-var _cachedUsers = null;
 var REMEMBER_DAYS = 7;   // 免登录保持天数
+var _cachedUsers = null;
 
-// ── 当前登录用户（含完整客户信息：discount / priceLevel / 业务字段）──
+// ── 当前登录用户（含完整客户信息）──
 var CURRENT_USER = null;
 
-// ── 解析CSV行（正确处理带逗号的引号字段，如地址 "Via Roma 1, Milano"）──
+// ── 解析CSV行（正确处理带逗号的引号字段）──
 function parseCSVRow(row){
   var result = [];
   var inQuote = false;
@@ -7371,27 +7416,15 @@ function parseCSVRow(row){
 var IS_LOCAL_HOST = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:';
 if(IS_LOCAL_HOST){
   console.log('本地模式：跳过登录验证');
-  sessionStorage.setItem(SESSION_KEY, JSON.stringify({username: 'local_test', name: 'Utente di Test Locale'}));
-  if(!CURRENT_USER){
-    CURRENT_USER = {
-      username: 'local_test', name: 'Utente di Test Locale', status: 'active',
-      nome: '', indirizzo: '', piva: '', cod: '',
-      codiceFiscale: '', email: '', telefono: '', priceLevel: 'A', discount: 0
-    };
-  }
+  CURRENT_USER = {
+    username: 'local_test', name: 'Test Locale', status: 'active',
+    nome: 'Negozio Test', indirizzo: 'Via Test 1', piva: '', cod: '',
+    codiceFiscale: '', email: '', telefono: '', priceLevel: 'A', discount: 0
+  };
+  var _localExp = Date.now() + REMEMBER_DAYS * 86400000;
+  localStorage.setItem(SESSION_KEY, JSON.stringify({ user: CURRENT_USER, exp: _localExp }));
 }
 
-// ── 计算折后价格（折扣为百分比，如 20 = 打8折）──
-function getDiscountedPrice(basePrice){
-  if(!CURRENT_USER || !CURRENT_USER.discount) return basePrice;
-  var d = parseFloat(CURRENT_USER.discount) || 0;
-  if(d <= 0 || d >= 100) return basePrice;
-  return basePrice * (1 - d / 100);
-}
-
-// ── 用户表列结构（13 列）：
-// A:user B:pass C:name D:status E:nome F:indirizzo G:piva H:cod I:codiceFiscale J:email K:telefono L:priceLevel M:discount
-// 新增列 E~M 为空时全部回退到默认值（priceLevel='A'，discount=0），旧表不改造也能正常登录
 function loadUserSheet(callback){
   if(_cachedUsers){ callback(_cachedUsers); return; }
   var xhr = new XMLHttpRequest();
@@ -7435,47 +7468,50 @@ function loadUserSheet(callback){
   xhr.send();
 }
 
+// ── 从 localStorage 恢复用户信息（7天内免登录） ──
+function restoreCurrentUser(){
+  try {
+    var raw = localStorage.getItem(SESSION_KEY);
+    if(!raw) return;
+    var obj = JSON.parse(raw);
+    if(obj && obj.exp && Date.now() < obj.exp && obj.user){
+      CURRENT_USER = obj.user;
+    } else {
+      localStorage.removeItem(SESSION_KEY); // 已过期，清除
+    }
+  } catch(e){ localStorage.removeItem(SESSION_KEY); }
+}
+
+// ── 计算折后价格（折扣为百分比，如20表示8折） ──
+function getDiscountedPrice(basePrice){
+  if(!CURRENT_USER || !CURRENT_USER.discount) return basePrice;
+  var d = parseFloat(CURRENT_USER.discount) || 0;
+  if(d <= 0 || d >= 100) return basePrice;
+  return basePrice * (1 - d / 100);
+}
+
+// ── 覆盖 formatPrice，让所有价格展示都走折扣逻辑 ──
+// 注意：App内的formatPrice不受影响，我们用全局函数 fmtP 来渲染折后价
+window.fmtP = function(basePrice){
+  var p = getDiscountedPrice(basePrice);
+  return '€' + p.toFixed(2);
+};
+
 function checkLoginState(){
-  // 优先读 localStorage（7天免登录，含完整客户信息），过期则回退到 sessionStorage
   try {
     var raw = localStorage.getItem(SESSION_KEY);
     if(raw){
       var obj = JSON.parse(raw);
-      if(obj && obj.exp && Date.now() < obj.exp){
-        // 新格式：{ user: {完整对象}, exp }；旧格式：{ username, name, exp }
-        if(obj.user && typeof obj.user === 'object'){
-          CURRENT_USER = obj.user;
-        } else {
-          CURRENT_USER = {
-            username: obj.username, name: obj.name || obj.username, status: 'active',
-            nome:'', indirizzo:'', piva:'', cod:'', codiceFiscale:'', email:'', telefono:'',
-            priceLevel: 'A', discount: 0
-          };
-        }
+      if(obj && obj.exp && Date.now() < obj.exp && obj.user){
+        CURRENT_USER = obj.user;
         document.getElementById('login-overlay').classList.add('hidden');
         App.init();
         return;
+      } else {
+        localStorage.removeItem(SESSION_KEY); // 已过期
       }
-      // 过期清理
-      localStorage.removeItem(SESSION_KEY);
     }
-  } catch(e){ try{ localStorage.removeItem(SESSION_KEY); }catch(e2){} }
-  // 回退：sessionStorage（本次浏览器会话内登录过，无完整客户信息则折扣按 0 处理）
-  var user = sessionStorage.getItem(SESSION_KEY);
-  if(user){
-    try {
-      var su = JSON.parse(user);
-      if(!CURRENT_USER){
-        CURRENT_USER = {
-          username: su.username, name: su.name || su.username, status: 'active',
-          nome:'', indirizzo:'', piva:'', cod:'', codiceFiscale:'', email:'', telefono:'',
-          priceLevel: 'A', discount: 0
-        };
-      }
-    } catch(e){}
-    document.getElementById('login-overlay').classList.add('hidden');
-    App.init();
-  }
+  } catch(e){ localStorage.removeItem(SESSION_KEY); }
 }
 
 function doLogin(){
@@ -7517,27 +7553,23 @@ function doLogin(){
       return;
     }
 
-    // 保存完整客户信息（含 discount / priceLevel / 业务字段）到 session
+    // 保存完整客户信息到session
     CURRENT_USER = {
       username:       found.user,
       name:           found.name || found.user,
       status:         found.status,
-      nome:           found.nome           || '',
-      indirizzo:      found.indirizzo      || '',
-      piva:           found.piva           || '',
-      cod:            found.cod            || '',
-      codiceFiscale:  found.codiceFiscale  || '',
-      email:          found.email          || '',
-      telefono:       found.telefono       || '',
-      priceLevel:     found.priceLevel     || 'A',
-      discount:       found.discount       || 0
+      nome:           found.nome,
+      indirizzo:      found.indirizzo,
+      piva:           found.piva,
+      cod:            found.cod,
+      codiceFiscale:  found.codiceFiscale,
+      email:          found.email,
+      telefono:       found.telefono,
+      priceLevel:     found.priceLevel,
+      discount:       found.discount
     };
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify({ username: found.user, name: found.name || found.user }));
-    // 7天免登录：完整用户对象 + 过期时间戳写入 localStorage
-    try {
-      var exp = Date.now() + REMEMBER_DAYS * 86400000;
-      localStorage.setItem(SESSION_KEY, JSON.stringify({ user: CURRENT_USER, exp: exp }));
-    } catch(e){}
+    var exp = Date.now() + REMEMBER_DAYS * 86400000;
+    localStorage.setItem(SESSION_KEY, JSON.stringify({ user: CURRENT_USER, exp: exp }));
     document.getElementById('login-overlay').classList.add('hidden');
     App.init();
   });
@@ -7597,7 +7629,7 @@ if(!IS_LOCAL_HOST){
 
     var addr = order.address;
     var addrText = (addr.name||'') + ' ' + (addr.phone||'') + '<br>'
-      + (addr.province||'') + (addr.city||'') + (addr.district||'') + (addr.detail||'');
+      + (addr.detail||'');
 
     var templateParams = {
       order_no:    order.no,
@@ -7640,6 +7672,5 @@ if(!IS_LOCAL_HOST){
 <!-- 更新时间: 2026-04-07 01:25:49 -->
 <!-- 更新时间: 2026-04-07 01:37:25 -->
 <!-- 更新时间: 2026-04-07 02:14:31 -->
-<!-- 更新时间: 2026-05-02 16:25:57 -->
-<!-- 更新时间: 2026-05-02 16:27:27 -->
-<!-- 更新时间: 2026-05-02 20:09:59 -->
+<!-- 更新时间: 2026-04-18 13:24:25 -->
+<!-- 更新时间: 2026-04-25 03:58:49 -->

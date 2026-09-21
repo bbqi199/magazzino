@@ -1,6 +1,30 @@
-"""非交互式发布脚本"""
-import csv, json, re, os, glob, subprocess, sys, io
+﻿"""非交互式发布脚本"""
+import csv, json, re, os, glob, subprocess, sys, io, shutil
 from datetime import datetime
+
+# ---- 自动定位 git.exe（PATH → WorkBuddy 便携版 → 常见安装位置）----
+def find_git():
+    p = shutil.which('git')
+    if p:
+        return p
+    cands = [os.path.expandvars(r'%USERPROFILE%\binaries_placeholder'),
+             r'C://Program Files\Git\cmd\git.exe',
+             r'C://Program Files (x86)\Git\cmd\git.exe',
+             os.path.expandvars(r'%LOCALAPPDATA%\Programs\Git\cmd\git.exe')]
+    cands[0] = os.path.expandvars(r'%USERPROFILE%') + r'\.workbuddy\binaries\PortableGit\**\cmd\git.exe'
+    for pat in cands:
+        if '*' in pat:
+            h = sorted(glob.glob(pat, recursive=True), reverse=True)
+            if h:
+                return h[0]
+        elif os.path.exists(pat):
+            return pat
+    return None
+GIT = find_git()
+if GIT is None:
+    print('❌ 找不到 git.exe！')
+    sys.exit(1)
+
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
@@ -105,10 +129,10 @@ now = datetime.now().strftime('%Y-%m-%d %H:%M')
 commit_msg = f'更新商品数据 {now}（共{len(goods)}件）'
 
 try:
-    subprocess.run(['git', 'add', '-f', 'goods.json', 'index.html'], check=True, capture_output=True)
-    subprocess.run(['git', 'commit', '-m', commit_msg], check=True, capture_output=True)
+    subprocess.run([GIT, 'add', '-f', 'goods.json', 'index.html'], check=True, capture_output=True)
+    subprocess.run([GIT, 'commit', '-m', commit_msg], check=True, capture_output=True)
     print('📤 推送到GitHub...')
-    subprocess.run(['git', 'push', 'origin', 'main'], check=True, capture_output=True)
+    subprocess.run([GIT, 'push', 'origin', 'main'], check=True, capture_output=True)
     print(f'\n🎉 发布成功！约1-2分钟后线上同步。')
     print(f'   线上地址：https://bbqi199.github.io/magazzino/')
 except subprocess.CalledProcessError as e:

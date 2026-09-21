@@ -10,3 +10,5 @@ _archive_cleanup_20260401/
 *.gif
 
 .DS_Store
+
+__pycache__/
